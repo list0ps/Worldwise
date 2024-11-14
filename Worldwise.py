@@ -61,28 +61,7 @@ timezones_dict = {
 
 # dictionary to store user ID, username, and city mappings
 USER_TIMEZONE_MAPPING = {
-    340485392434200576: ("list", "hlz"),
-    744440440786255994: ("Bronoy", "dac"),
-    697901157472796826: ("Bush", "dac"),
-    439530718352375827: ("curlysandwich", "nyc"),
-    626150404333371422: ("gl1vch", "yyz"),
-    313373154812755969: ("Ibrahim", "kl"),
-    701305433633194018: ("ItznotHawk", "mel"),
-    709061499066515476: ("mehnaz", "nyc"),
-    719836306569429064: ("Moose", "dac"),
-    665657749207777351: ("Nay", "yyz"),
-    428113253726683137: ("Nowfel", "yyz"),
-    544753860858871831: ("ORANGMAN", "akl"),
-    392683322805059587: ("Relic", "dac"),
-    422394995266551808: ("Shamo_99", "lxm"),
-    692430092592218123: ("Skibby", "kl"),
-    368379417208029185: ("strangyyy", "dac"),
-    488021414759366668: ("tooshiewooshie", "dac"),
-    426522676581105676: ("Verse", "dac"),
-    487064547832627200: ("Alex", "plu"),
-    960839376563236894: ("Yashfi", "kl"),
-    219797015066968064: ("Zer0", "yyz"),
-    425981881138413568: ("ZiWei", "kl"),
+  #removed for privacy
 }
 
 # Mapping currency codes to (singular name, plural name) where anything but 1 returns plural (or so i hope)
@@ -475,17 +454,19 @@ async def on_message(message):
     elif message.content.lower().startswith('cthelp'):
         await message.channel.send(
             "**time - Current Time:**\n"
-            "`time <location>` - Provides the current time in a city or country.\n"
-            "Example: `time Kuala Lumpur`, `time MY`, or `time Malaysia`.\n\n"
-            "**time @username**\n"
-            "`time @username` - Provides the current time for the mentioned user. You have to ping them with @.\n"
+            "`time <location>` - Provides the current time for the specified city or country.\n"
+            "Example: `time Kuala Lumpur`, `time MY`, or `time Malaysia`.\n"
+            "Capitalisation does not matter.\n\n"
+            "**time @username - User Time:**\n"
+            "`time @username` - Provides the current time for the mentioned user based on their configured city.\n"
             "Example: `time @Zer0`.\n\n"
             "**convt - Time Zone Conversion:**\n"
             "`convt <time> <origin location> to <destination location>` - Converts time from one location to another.\n"
             "Example: `convt 6pm Malaysia to Australia`.\n"
             "If a country has multiple time zones, all zones will be listed; single cities will only show one timezone.\n"
             "**Note:** Minutes are not supported; only hour formats like 6pm or 8am will work.\n\n"
-            "All commands are case-_insensitive_.\n"
+            "`convt <time> @user1 to @user2` - Converts time from one user's location to another's location.\n"
+            "Example: `convt 2pm @Zer0 to @strangyyy`.\n\n"
             "Type `ctlist` to view all supported countries / cities with codes for easy typing."
         )
 
@@ -525,47 +506,8 @@ async def on_message(message):
 
 # Handle 'convt' command
     elif message.content.lower().startswith('convt '):
-        parts = message.content[6:].split(' to ')
-        if len(parts) == 2:
-            try:
-                time_str, origin_location = parts[0].rsplit(' ', 1)
-                destination_location = parts[1].strip()
+        await handle_convt_command(message)
 
-                converted_times = convert_time(time_str, origin_location, destination_location)
-
-                if converted_times:
-                    # Add the country name and ensure GMT is placed at the end
-                    formatted_times = []
-                    for converted_time in converted_times:
-                        # Extract destination city, country, and GMT offset
-                        for country, cities in timezones_dict.items():
-                            for city, code, _, gmt_offset in cities:
-                                if city.lower() == destination_location.lower() or code.lower() == destination_location.lower():
-                                    country_name = country.title()
-                                    # Correctly format the final output
-                                    time_part = converted_time.split(",")[0]  # Extract time part
-                                    formatted_times.append(f"{time_part}, {country_name}, {gmt_offset}.")
-                                    break
-                            else:
-                                continue
-                            break
-                        else:
-                            # If no country is found, fallback to original response
-                            formatted_times.append(f"{converted_time}.")
-
-                    await message.channel.send("\n".join(formatted_times))
-                else:
-                    await message.channel.send(
-                        "Timezone(s) unsupported - type 'ctlist' for supported timezones and cities."
-                    )
-            except ValueError:
-                await message.channel.send(
-                    "Invalid syntax. Use `convt <time> <origin location> to <destination location>`."
-                )
-        else:
-            await message.channel.send(
-                "Invalid syntax. Use `convt <time> <origin location> to <destination location>`."
-            )
 
 
 # function to fetch time for a specific user from user_timezone_mapping
@@ -615,6 +557,73 @@ async def handle_time_command(message):
             await message.channel.send(
                 "Timezone(s) unsupported - type 'ctlist' for supported timezones and cities."
             )
+
+# allows converting user - user time 
+async def handle_convt_command(message):
+    parts = message.content[6:].split(' to ')
+    if len(parts) == 2:
+        try:
+            time_str, origin_location = parts[0].rsplit(' ', 1)
+            destination_location = parts[1].strip()
+
+            mentioned_users = message.mentions
+            if mentioned_users:
+                if len(mentioned_users) == 2:
+                    from_user, to_user = mentioned_users
+
+                    from_user_data = USER_TIMEZONE_MAPPING.get(from_user.id)
+                    to_user_data = USER_TIMEZONE_MAPPING.get(to_user.id)
+
+                    if not from_user_data or not to_user_data:
+                        await message.channel.send("Timezone information for one or both users is missing.")
+                        return
+
+                    from_username, from_city_abbreviation = from_user_data
+                    to_username, to_city_abbreviation = to_user_data
+
+                    converted_times = convert_time(time_str, from_city_abbreviation, to_city_abbreviation)
+
+                    if converted_times:
+                        # Retrieve full city names for both users
+                        from_city_name = next(
+                            (city.title() for country, cities in timezones_dict.items() for city, abbreviation, _, _ in cities if abbreviation == from_city_abbreviation),
+                            from_city_abbreviation.upper()
+                        )
+                        to_city_name = next(
+                            (city.title() for country, cities in timezones_dict.items() for city, abbreviation, _, _ in cities if abbreviation == to_city_abbreviation),
+                            to_city_abbreviation.upper()
+                        )
+
+                        # Correct response formatting (no city repeated)
+                        response = f"{time_str} for **{from_username}** in {from_city_name}, is "
+                        response += f"{converted_times[0].split(' is ')[1]} for **{to_username}**."
+                        await message.channel.send(response)
+                        return
+
+                    else:
+                        await message.channel.send("Could not convert time between the mentioned users.")
+                        return
+
+            # If no mentions, use the location-based conversion
+            converted_times = convert_time(time_str, origin_location, destination_location)
+
+            if converted_times:
+                # Send the regular conversion response
+                await message.channel.send("\n".join(converted_times))
+            else:
+                await message.channel.send(
+                    "Timezone(s) unsupported - type 'ctlist' for supported timezones and cities."
+                )
+        except ValueError:
+            await message.channel.send(
+                "Invalid syntax. Use `convt <time> <origin location> to <destination location>` or `convt <time> @user1 to @user2`."
+            )
+    else:
+        await message.channel.send(
+            "Invalid syntax. Use `convt <time> <origin location> to <destination location>` or `convt <time> @user1 to @user2`."
+        )
+
+
 
 
 # actual conversion happens here (hopefully)

@@ -5,7 +5,7 @@ This is a Discord bot designed to provide time look-ups and time and currency co
 ## Features
 - **Time Zone Conversion:** Convert time from one location to another, including support for multiple time zones within a country.
 - **Time Lookup:** Simply gives you the current time of a location you ask for.
-- **User-time Lookup: Tells you what time it is for the user you @ping.
+- **User-time Lookup:## Tells you what time it is for the user you @ping.
 - **Currency Conversion:** Convert amounts between various currencies and get additional information like historical data and exchange rates.
 - **Periodic Messages:** Prevent Heroku dynos from going to sleep by sending periodic messages.
 - **User-Friendly Commands:** easy-to-use commands for conversion and time retrieval.

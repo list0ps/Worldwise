@@ -18,7 +18,7 @@ This is a Discord bot designed to provide time look-ups and time and currency co
 |----------------------------------------------------------------------|-----------------------------------------------------------------------------|----------------------------------------------|
 | `time <location>`                                                     | Returns the current time for the specified city. If a country is used in `location`, returns cities in that country. | `time Kuala Lumpur`, `time MY`, `time Malaysia` |
 | `time <@user>`                                                     | Returns the current time for the mentioned user. | `time @Zer0` |
-| `convt <time> <origin location> to <destination location>`             | Converts time from one location to another. Returns cities in countries if country is mentioned. Note: minutes are not supported, only "Xam/pm> will work. | `convt 6pm KL to Australia`, `convt 9am NYC to London` |
+| `convt <time> <origin location> to <destination location>`             | Converts time from one location to another. Returns cities in countries if country is mentioned. Note: minutes are not supported, only "Xam/pm" will work. | `convt 6pm KL to Australia`, `convt 9am NYC to London` |
 | `convt <time> <@user> to <@user>`             | Converts specified time for one user to another's. | `convt 6pm KL to Australia`, `convt 9am NYC to London` |
 | `conv <amount> <from_currency> to <target_currency>`                   | Converts a given amount from one currency to another. | `conv 100 USD to CAD`, `conv 100 EUR to GBP` |
 | `convf <amount> <from_currency> to <target_currency>`                  | Returns conversion + additional info (high, low, average, change). | `convf 100 USD to CAD`, `convf 100 EUR to GBP` |

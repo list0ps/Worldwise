@@ -1,0 +1,47 @@
+# === ENVIRONMENTS & VIRTUAL ENVS ===
+.env
+.env.*
+venv/
+.VENV/
+env/
+ENV/
+
+# === PYTHON CACHE & LOG FILES ===
+__pycache__/
+*.py[cod]
+*.log
+*.sqlite3
+*.db
+
+# === DISCORD BOT FILES ===
+user_descriptions.json
+bot_stats.json
+command_log.txt
+data_mappings.py
+readme_content.py
+
+# === PYINSTALLER / BUILD ARTIFACTS ===
+*.spec
+build/
+dist/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# === TOKENS & API KEYS CONFIG FILE (if used) ===
+secrets.json
+config.json
+
+# === VS CODE & EDITOR SETTINGS ===
+.vscode/
+.idea/
+
+# === ICONS & STATIC ARTIFACTS ===
+logo.ico
+logo.png
+
+# === chat_logs.txt ===
+chat_logs.txt
+# Environment variables
+.env

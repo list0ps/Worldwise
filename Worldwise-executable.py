@@ -654,8 +654,8 @@ async def on_message(message):
 
     
 # Handle 'timec' command
-    elif message.content.lower().startswith('timec ') or message.content.lower().startswith('timeconvert'):
-        await handle_timec_command(message)
+  #  elif message.content.lower().startswith('timec ') or message.content.lower().startswith('timeconvert'):
+  #      await handle_timec_command(message)
 
 
 
@@ -1065,14 +1065,14 @@ async def server_info_command(interaction: discord.Interaction):
     else:
         await interaction.response.send_message("This command must be used in a server.")
 
-@tree.command(name="time", description="Get current time in a location or for a user")
-@app_commands.describe(location="City, country, timezone abbreviation, or @mention")
-async def time_command(interaction: discord.Interaction, location: str):
-    location = location.strip()
+@tree.command(name="time", description="Get current for @user or location")
+@app_commands.describe(User="@mention user or location")
+async def time_command(interaction: discord.Interaction, User: str):
+    User = User.strip()
     
     # Check if it's a user mention
-    if location.startswith("<@") and location.endswith(">"):
-        user_id = location[2:-1].replace("!", "")  # remove optional "!" for nicknames
+    if User.startswith("<@") and User.endswith(">"):
+        user_id = User[2:-1].replace("!", "")  # remove optional "!" for nicknames
         try:
             user_id_int = int(user_id)
         except ValueError:

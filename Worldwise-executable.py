@@ -247,7 +247,7 @@ def format_time(time_obj, format_12hr=True):
 
 
 TEST_GUILD_ID = 1356960708230779023
-# Initialize Discord bot with intents - probably should've been at the very top but cuck it we ball
+# Initialize Discord bot with intents - probably should've been at the very top 
 # Also this was introduced in 2023 most likely, wasn't required for discord.py
 intents = discord.Intents.default()
 intents.message_content = True
@@ -281,8 +281,8 @@ async def on_ready():
         await startup_channel.send("I am now online.")
 
 
-        await tree.sync(guild=test_guild) #kept for testing
-      #  await tree.sync()  # Sync globally
+      #  await tree.sync(guild=test_guild) #kept for testing
+        await tree.sync()  # Sync globally
     print("Synced slash commands to test guild.")
 
     
@@ -465,9 +465,9 @@ async def on_message(message):
         if message.author.guild_permissions.administrator:
             try:
                 await tree.sync(guild=message.guild)
-                await message.channel.send("✅ Slash commands have been refreshed for this server.")
+                await message.channel.send("Slash commands have been refreshed for this server.")
             except Exception as e:
-                await message.channel.send(f"❌ Failed to refresh slash commands: {e}")
+                await message.channel.send(f"Failed to refresh slash commands: {e}")
         else:
             await message.channel.send("You need to be an admin to use this command.")
 
@@ -553,20 +553,20 @@ async def on_message(message):
     # formerly listserv command: Only accessible by the bot owner
     # lists all servers the bot is in
 
-    if message.content.lower() in ["ww -guilds", "worldwise -guilds"]:
-        if message.author.id != 223689629990125569: #admin ID
-            await message.channel.send("You do not have permission to use this command.")
-            return
+    #if message.content.lower() in ["ww -guilds", "worldwise -guilds"]:
+        #if message.author.id != 223689629990125569: #admin ID
+           # await message.channel.send("You do not have permission to use this command.")
+           # return
 
-        guilds = client.guilds
-        if guilds:
-            guild_list = "\n".join(
-                [f"- **{guild.name}** (ID: {guild.id}, Members: **{guild.member_count}**)" for guild in guilds]
-            )
-            await message.channel.send(f"**The bot is in the following servers:**\n{guild_list}")
-        else:
-            await message.channel.send("**The bot is not in any servers.**")
-        return
+    #    guilds = client.guilds
+     #   if guilds:
+      #      guild_list = "\n".join(
+     #           [f"- **{guild.name}** (ID: {guild.id}, Members: **{guild.member_count}**)" for guild in guilds]
+     #       )
+     #       await message.channel.send(f"**The bot is in the following servers:**\n{guild_list}")
+     #   else:
+     #       await message.channel.send("**The bot is not in any servers.**")
+     #   return
 
     # lists some basic server information - commented out admin restrictor for now 
     if message.content.lower() in ["serverinfo", "svinfo"]:
@@ -616,8 +616,8 @@ async def on_message(message):
         #await message.channel.send(embed=embed)
 
 # Adding this to the on_message handler to handle the `time` command
-    elif message.content.lower().startswith('time '):
-        await handle_time_command(message)
+#    elif message.content.lower().startswith('time '):
+#        await handle_time_command(message)
 
     # Handle 'clist' for listing supported currencies
     elif message.content.lower().startswith('clist'):
@@ -636,19 +636,19 @@ async def on_message(message):
 
 
 # Handle 'time' command
-    elif message.content.lower().startswith('time '):
-        location_name = message.content[5:].strip()
-        times = get_current_time(location_name)
-        if times:
+#    elif message.content.lower().startswith('time '):
+#        location_name = message.content[5:].strip()
+#        times = get_current_time(location_name)
+#        if times:
             # Capitalize only the first letter of each word in the country name
-            formatted_times = [
-                time.replace(location_name.upper(), location_name.title()) for time in times
-            ]
-            await message.channel.send("\n".join(formatted_times))
-        else:
-            await message.channel.send(
-                "Timezone(s) unsupported - type 'tlist' for supported timezones and cities."
-            )
+#            formatted_times = [
+ #               time.replace(location_name.upper(), location_name.title()) for time in times
+ #           ]
+  #          await message.channel.send("\n".join(formatted_times))
+   #     else:
+    #        await message.channel.send(
+     #           "Timezone(s) unsupported - type 'tlist' for supported timezones and cities."
+      #      )
 
     
 
@@ -1103,6 +1103,55 @@ async def time_command(interaction: discord.Interaction, location: str):
             await interaction.response.send_message("\n".join(formatted))
         else:
             await interaction.response.send_message("Timezone(s) unsupported — use `/tlist` for supported timezones and cities.")
+
+@tree.command(name="timeconvert", description="Convert time between two users or locations")
+@app_commands.describe(
+    time_str="Time to convert (e.g. 5pm, 17:00)",
+    from_user="@User or city/abbreviation",
+    to_user="@User or city/abbreviation"
+)
+async def timeconvert_command(interaction: discord.Interaction, time_str: str, from_user: str, to_user: str):
+    from_input = from_user.strip()
+    to_input = to_user.strip()
+
+    def extract_user_id(mention: str):
+        if mention.startswith("<@") and mention.endswith(">"):
+            return int(mention[2:-1].replace("!", ""))
+        return None
+
+    from_user_id = extract_user_id(from_input)
+    to_user_id = extract_user_id(to_input)
+
+    if from_user_id and to_user_id:
+        from_data = USER_TIMEZONE_MAPPING.get(from_user_id)
+        to_data = USER_TIMEZONE_MAPPING.get(to_user_id)
+
+        if not from_data or not to_data:
+            await interaction.response.send_message("One or both users do not have timezone info saved.")
+            return
+
+        from_name, from_abbr = from_data
+        to_name, to_abbr = to_data
+
+        results = convert_time(time_str, from_abbr, to_abbr)
+        if results:
+            # Clean formatting: get the converted time only (right side of `is`)
+            clean_time = results[0].split(" is ")[1]
+            response = f"{time_str} for **{from_name}** in {from_abbr.upper()} is {clean_time} for **{to_name}**."
+            await interaction.response.send_message(response)
+        else:
+            await interaction.response.send_message("Couldn't convert between user timezones.")
+        return
+
+    # Fallback: use as city or abbreviation
+    results = convert_time(time_str, from_input, to_input)
+    if results:
+        await interaction.response.send_message("\n".join(results))
+    else:
+        await interaction.response.send_message(
+            "Unsupported location or timezone. Try `/tlist` for valid entries."
+        )
+
 
 
 @tree.command(name="clist", description="List all supported currencies")

@@ -1065,14 +1065,18 @@ async def server_info_command(interaction: discord.Interaction):
     else:
         await interaction.response.send_message("This command must be used in a server.")
 
-@tree.command(name="time", description="Get current for @user or location")
-@app_commands.describe(User="@mention user or location")
-async def time_command(interaction: discord.Interaction, User: str):
-    User = User.strip()
+from discord.app_commands import Parameter
+
+from discord.app_commands import Parameter
+
+@tree.command(name="time", description="Get current time for a user or by location")
+@app_commands.describe(user="@user or a city/country/abbreviation")
+async def time_command(interaction: discord.Interaction, user: str):
+    location = user.strip()
     
     # Check if it's a user mention
-    if User.startswith("<@") and User.endswith(">"):
-        user_id = User[2:-1].replace("!", "")  # remove optional "!" for nicknames
+    if location.startswith("<@") and location.endswith(">"):
+        user_id = location[2:-1].replace("!", "")  # remove optional "!" for nicknames
         try:
             user_id_int = int(user_id)
         except ValueError:
@@ -1103,6 +1107,8 @@ async def time_command(interaction: discord.Interaction, User: str):
             await interaction.response.send_message("\n".join(formatted))
         else:
             await interaction.response.send_message("Timezone(s) unsupported — use `/tlist` for supported timezones and cities.")
+
+
 
 @tree.command(name="timeconvert", description="Convert time between two users or locations")
 @app_commands.describe(

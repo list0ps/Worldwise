@@ -281,8 +281,8 @@ async def on_ready():
         await startup_channel.send("I am now online.")
 
 
-      #  await tree.sync(guild=test_guild) #kept for testing
-        await tree.sync()  # Sync globally
+        await tree.sync(guild=test_guild) #kept for testing
+      #  await tree.sync()  # Sync globally
     print("Synced slash commands to test guild.")
 
     
@@ -853,17 +853,17 @@ async def send_error(error_message, original_message):
 
 @tree.command(name="active", description="Ping to keep the bot eligible")
 async def active_command(interaction: discord.Interaction):
-    await interaction.response.send_message("This command exists.")
+    await interaction.response.send_message("Good job, you've executed a useless command.")
 
-@tree.command(name="weather", description="Get the current weather in a location or for a user")
-@app_commands.describe(location_or_user="A city, country, or @mention")
-async def weather_command(interaction: discord.Interaction, location_or_user: str):
+@tree.command(name="weathertest", description="Get the current weather for a user or location")
+@app_commands.describe(user_or_location="@user, city, country or abbreviation")
+async def weather_command(interaction: discord.Interaction, user_or_location: str):
     await interaction.response.defer()
 
     # Determine if it's a user mention
-    location_or_user = location_or_user.strip()
-    if location_or_user.startswith("<@") and location_or_user.endswith(">"):
-        user_id = location_or_user[2:-1].replace("!", "")  # Strip <@! >
+    user_or_location = user_or_location.strip()
+    if user_or_location.startswith("<@") and user_or_location.endswith(">"):
+        user_id = user_or_location[2:-1].replace("!", "")  # Strip <@! >
         try:
             uid = str(int(user_id))
         except ValueError:
@@ -876,7 +876,7 @@ async def weather_command(interaction: discord.Interaction, location_or_user: st
             await interaction.followup.send("This user's location isn't in the database.")
             return
     else:
-        location = location_or_user
+        location = user_or_location
         username = None
 
     try:
@@ -1069,10 +1069,10 @@ from discord.app_commands import Parameter
 
 from discord.app_commands import Parameter
 
-@tree.command(name="time", description="Get current time for a user or by location")
-@app_commands.describe(user="@user or a city/country/abbreviation")
-async def time_command(interaction: discord.Interaction, user: str):
-    location = user.strip()
+@tree.command(name="timetest", description="Get current time for a user or by location")
+@app_commands.describe(user_or_location="@user or a city/country/abbreviation")
+async def time_command(interaction: discord.Interaction, user_or_location: str):
+    location = user_or_location.strip()
     
     # Check if it's a user mention
     if location.startswith("<@") and location.endswith(">"):
@@ -1107,6 +1107,7 @@ async def time_command(interaction: discord.Interaction, user: str):
             await interaction.response.send_message("\n".join(formatted))
         else:
             await interaction.response.send_message("Timezone(s) unsupported — use `/tlist` for supported timezones and cities.")
+
 
 
 

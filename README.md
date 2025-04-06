@@ -14,7 +14,7 @@ Though most of the bot's functionality is easily attainable through a quick goog
 
 | Command            | Description                                                                   | Example Usage                                 |
 |--------------------|-------------------------------------------------------------------------------|-----------------------------------------------|
-| `/time`            | Get the current time in a city or timezone abbreviation.                      | `/time Tokyo`                                 |
+| `/time`            | Get the current time in a city, timezone abbreviation or <@mentionuser>                      | `/time Tokyo, /time <@user>`                                 |
 | `/timeconvert`     | Convert a time from one location to another.                                  | `/timeconvert 7:30am London to Sydney`        |
 | `/tlist`           | Lists all supported timezones and abbreviations.                              | `/tlist`                                      |
 

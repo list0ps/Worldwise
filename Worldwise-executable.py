@@ -246,7 +246,7 @@ def format_time(time_obj, format_12hr=True):
         return time_obj.strftime('%H:%M')  # Convert to 24-hour format
 
 
-TEST_GUILD_ID = 752503679113887764
+TEST_GUILD_ID = 1356960708230779023
 # Initialize Discord bot with intents - probably should've been at the very top but cuck it we ball
 # Also this was introduced in 2023 most likely, wasn't required for discord.py
 intents = discord.Intents.default()
@@ -263,9 +263,9 @@ descriptions = load_descriptions()
 
 
 # Placeholder for error logging channel and startup message channel
-ERROR_CHANNEL_ID = 1305733544261455882  # error logs
-STARTUP_CHANNEL_ID = 1305733544261455882  # channel ID for startup messages
-PERIODIC_CHANNEL_ID = 1305815351069507604  # spams 28m so heroku doesn't bonk us
+ERROR_CHANNEL_ID = 1357709109071184093  # error logs
+STARTUP_CHANNEL_ID = 1357709085184884766  # channel ID for startup messages
+PERIODIC_CHANNEL_ID = 1358254137946542283  # spams 28m so heroku doesn't bonk us
 
 # startup message
 @client.event
@@ -281,8 +281,8 @@ async def on_ready():
         await startup_channel.send("I am now online.")
 
 
-       # await tree.sync(guild=test_guild) #kept for testing
-        await tree.sync()  # Sync globally
+        await tree.sync(guild=test_guild) #kept for testing
+      #  await tree.sync()  # Sync globally
     print("Synced slash commands to test guild.")
 
     
@@ -855,31 +855,56 @@ async def send_error(error_message, original_message):
 async def active_command(interaction: discord.Interaction):
     await interaction.response.send_message("This command exists.")
 
-@tree.command(name="weather", description="Get the current weather in a location.")
-@app_commands.describe(location="Enter a city or country (e.g. London, UK)")
-async def weather_command(interaction: discord.Interaction, location: str):
+@tree.command(name="weather", description="Get the current weather in a location or for a user")
+@app_commands.describe(location_or_user="A city, country, or @mention")
+async def weather_command(interaction: discord.Interaction, location_or_user: str):
     await interaction.response.defer()
+
+    # Determine if it's a user mention
+    location_or_user = location_or_user.strip()
+    if location_or_user.startswith("<@") and location_or_user.endswith(">"):
+        user_id = location_or_user[2:-1].replace("!", "")  # Strip <@! >
+        try:
+            uid = str(int(user_id))
+        except ValueError:
+            await interaction.followup.send("Invalid user mention.")
+            return
+
+        if uid in USER_LOCATION_MAPPING:
+            username, location = USER_LOCATION_MAPPING[uid]
+        else:
+            await interaction.followup.send("This user's location isn't in the database.")
+            return
+    else:
+        location = location_or_user
+        username = None
+
     try:
         async with aiohttp.ClientSession() as session:
+            # Get coordinates for location
             geocoding_url = f"http://api.openweathermap.org/geo/1.0/direct?q={location}&limit=1&appid={WEATHER_API_KEY}"
             async with session.get(geocoding_url) as response:
                 if response.status != 200:
                     await interaction.followup.send("Sorry, I couldn't find that location.")
                     return
+                
                 geocode_data = await response.json()
                 if not geocode_data:
                     await interaction.followup.send("Sorry, I couldn't find that location.")
                     return
+
                 lat = geocode_data[0]['lat']
                 lon = geocode_data[0]['lon']
                 location_name = geocode_data[0]['name']
                 country = geocode_data[0]['country']
 
+            # Get weather data
             weather_url = f"http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={WEATHER_API_KEY}&units=metric"
             async with session.get(weather_url) as response:
                 if response.status != 200:
                     await interaction.followup.send("Sorry, I couldn't fetch the weather data.")
                     return
+                
                 weather_data = await response.json()
 
         temperature = round(weather_data['main']['temp'])
@@ -887,14 +912,22 @@ async def weather_command(interaction: discord.Interaction, location: str):
         temp_max = round(weather_data['main']['temp_max'])
         temp_min = round(weather_data['main']['temp_min'])
 
-        msg = (
-            f"It's **{condition}** and **{temperature}°C** in **{location_name}**, {country} today.\n"
-            f"High: {temp_max}°C, Low: {temp_min}°C."
-        )
+        if username:
+            msg = (
+                f"For **{username}**, it's **{condition}** and **{temperature} °C** in **{location_name}**, {country} today. "
+                f"They can expect highs of {temp_max} °C and lows of {temp_min} °C."
+            )
+        else:
+            msg = (
+                f"It's **{condition}** and **{temperature} °C** in **{location_name}**, {country} today. "
+                f"Expect highs of {temp_max} °C and lows of {temp_min} °C."
+            )
+
         await interaction.followup.send(msg)
 
     except Exception as e:
-        await interaction.followup.send(f"Error fetching weather: {e}")
+        await interaction.followup.send(f"An error occurred while fetching weather data: {str(e)}")
+
 
 
 @tree.command(name="convert", description="Convert between currencies")

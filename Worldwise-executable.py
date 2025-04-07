@@ -791,7 +791,7 @@ async def on_message(message):
 
         await message.channel.send(help_text)
 
-
+#test
 
     # lists some basic server information - commented out admin restrictor for now 
     # if message.content.lower() in ["serverinfo", "svinfo"]:
@@ -1485,6 +1485,7 @@ async def setdesc_command(interaction: discord.Interaction, description: str):
 
     await interaction.response.send_message("Your description has been saved.")
 
+print("Tracking test change")
 
 
 client.run(DISCORD_TOKEN)

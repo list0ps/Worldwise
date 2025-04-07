@@ -43,5 +43,7 @@ logo.png
 
 # === chat_logs.txt ===
 chat_logs.txt
+admin_command_help.txt
+
 # Environment variables
 .env

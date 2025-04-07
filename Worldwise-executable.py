@@ -1485,7 +1485,5 @@ async def setdesc_command(interaction: discord.Interaction, description: str):
 
     await interaction.response.send_message("Your description has been saved.")
 
-print("Tracking test change")
-
 
 client.run(DISCORD_TOKEN)

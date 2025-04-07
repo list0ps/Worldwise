@@ -20,14 +20,12 @@ from data_mappings import (
     SUPPORTED_CURRENCIES,
     USER_LOCATION_MAPPING,
 )
-from readme_content import sections
 from readme_content import (
-    get_weather_help_embed,
-    get_currency_help_embed,
-    get_time_help_embed,
+    sections,
     get_currency_list_embed,
     get_timezone_list_embed
 )
+
 
 from datetime import datetime
 
@@ -136,8 +134,7 @@ def get_exchange_rate(from_currency, to_currency):
 # Updated get_current_time function with additional cities for more countries
 def get_current_time(location):
     # Dictionary of countries, abbreviations, cities and GMT offsets
-    # Only way to support country abbreviations was to list them as separate elements (because I suck at python)
- 
+    # Only way to support country abbreviations was to list them as separate elements (shortcoming on my end if anything)
 
     # Normalizing input for case-insensitive matching because my friend alex is weird
     location = location.strip().casefold()
@@ -281,8 +278,8 @@ async def on_ready():
         await startup_channel.send("I am now online.")
 
 
-       # await tree.sync(guild=test_guild) #kept for testing
-   # print("Synced slash commands to test guild.")
+    #     await tree.sync(guild=test_guild) #kept for testing
+    # print("Synced slash commands to test guild.")
         await tree.sync()  # Sync globally
     print("Synced slash commands globally.")
 
@@ -1181,12 +1178,13 @@ async def convert_command(interaction: discord.Interaction, amount: float, from_
 
 #help_command
 @tree.command(name="help", description="Show README / help pages")
-async def whelp_command(interaction: discord.Interaction):
+async def help_command(interaction: discord.Interaction):
     current_page = 0
     total_pages = len(sections)
     embed = build_embed(sections[current_page])
     view = HelpView(current_page, total_pages)
     await interaction.response.send_message(embed=embed, view=view)
+
 
 #translate_command
 @tree.command(name="translate", description="Translate text to English")

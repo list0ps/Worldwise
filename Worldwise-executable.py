@@ -297,7 +297,8 @@ async def on_message(message):
         global command_counter
     command_counter += 1
     active_users.add(str(message.author))
-    log_command_to_file(str(message.author), message.content, message.guild, message.channel)
+    log_command_to_file(message.author.display_name, message.content, message.guild, message.channel)
+
 
 
     # Write stats

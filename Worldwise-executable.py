@@ -281,9 +281,10 @@ async def on_ready():
         await startup_channel.send("I am now online.")
 
 
-        await tree.sync(guild=test_guild) #kept for testing
-      #  await tree.sync()  # Sync globally
-    print("Synced slash commands to test guild.")
+       # await tree.sync(guild=test_guild) #kept for testing
+   # print("Synced slash commands to test guild.")
+        await tree.sync()  # Sync globally
+    print("Synced slash commands globally.")
 
     
     # Start background task for periodic messages so Heroku doesn't go bonkers
@@ -337,131 +338,254 @@ async def on_message(message):
         else:
             print("Target channel not found.")
 
+# Admin-only commands
 
-    if message.content.lower().startswith("whelp"):
-        current_page = 0
-        total_pages = len(sections)
 
-        # Create the initial embed
-        embed = build_embed(sections[current_page])  # Use the new function name
-        view = HelpView(current_page, total_pages)
-        await message.channel.send(embed=embed, view=view)
 
-    # Handle translate command
-    if message.content.lower().startswith('translate '):
-        # Extract the text to translate (everything after 'translate ')
-        text_to_translate = message.content[10:].strip()
+    # if message.content.lower().startswith("whelp"):
+    #     current_page = 0
+    #     total_pages = len(sections)
+
+    #     # Create the initial embed
+    #     embed = build_embed(sections[current_page])  # Use the new function name
+    #     view = HelpView(current_page, total_pages)
+    #     await message.channel.send(embed=embed, view=view)
+
+    # # Handle translate command
+    # if message.content.lower().startswith('translate '):
+    #     # Extract the text to translate (everything after 'translate ')
+    #     text_to_translate = message.content[10:].strip()
         
-        if not text_to_translate:
-            await message.channel.send("Please provide some text to translate.")
-            return
+    #     if not text_to_translate:
+    #         await message.channel.send("Please provide some text to translate.")
+    #         return
             
-        try:
-            # Create URL for Google Translate
-            url = f"https://translate.google.com/m?sl=auto&tl=en&q={text_to_translate}"
+    #     try:
+    #         # Create URL for Google Translate
+    #         url = f"https://translate.google.com/m?sl=auto&tl=en&q={text_to_translate}"
             
-            # Send request and get response
-            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
-            response = requests.get(url, headers=headers)
+    #         # Send request and get response
+    #         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+    #         response = requests.get(url, headers=headers)
             
-            if response.status_code == 200:
-                # Parse the response
-                soup = BeautifulSoup(response.text, 'html.parser')
-                # Find the translation result
-                result = soup.find('div', {'class': 'result-container'})
+    #         if response.status_code == 200:
+    #             # Parse the response
+    #             soup = BeautifulSoup(response.text, 'html.parser')
+    #             # Find the translation result
+    #             result = soup.find('div', {'class': 'result-container'})
                 
-                if result:
-                    translated_text = result.text
-                    await message.channel.send(f"**Translation:**\n{translated_text}")
-                else:
-                    await message.channel.send("Sorry, I couldn't translate that text.")
-            else:
-                await message.channel.send("Sorry, there was an error accessing the translation service.")
+    #             if result:
+    #                 translated_text = result.text
+    #                 await message.channel.send(f"**Translation:**\n{translated_text}")
+    #             else:
+    #                 await message.channel.send("Sorry, I couldn't translate that text.")
+    #         else:
+    #             await message.channel.send("Sorry, there was an error accessing the translation service.")
                 
-        except Exception as e:
-            error_channel = client.get_channel(ERROR_CHANNEL_ID)
-            if error_channel:
-                await error_channel.send(f"Translation error: {str(e)}")
-            await message.channel.send("Sorry, there was an error processing your translation request.")
+    #     except Exception as e:
+    #         error_channel = client.get_channel(ERROR_CHANNEL_ID)
+    #         if error_channel:
+    #             await error_channel.send(f"Translation error: {str(e)}")
+    #         await message.channel.send("Sorry, there was an error processing your translation request.")
 
 
-    # memlist command
-    if message.content.lower() == 'mlist':
-        # Check if the user has permission
-        #if message.author.id != 340485392434200576:
-        #    await message.channel.send("You do not have permission to use this command.")
-        #    return
+    # # memlist command
+    # if message.content.lower() == 'mlist':
+    #     # Check if the user has permission
+    #     #if message.author.id != 340485392434200576:
+    #     #    await message.channel.send("You do not have permission to use this command.")
+    #     #    return
 
-        guild = message.guild  # Get the guild (server) where the message was sent
+    #     guild = message.guild  # Get the guild (server) where the message was sent
         
-        # Create a list to hold member names and join dates
-        member_list = []
+    #     # Create a list to hold member names and join dates
+    #     member_list = []
         
-        # Fetch all members using an async for loop
-        async for member in guild.fetch_members():
-            # Use nickname if available, otherwise use username
-            nickname = member.nick if member.nick else member.name
+    #     # Fetch all members using an async for loop
+    #     async for member in guild.fetch_members():
+    #         # Use nickname if available, otherwise use username
+    #         nickname = member.nick if member.nick else member.name
             
-            # Format the join date with shortened month names
-            join_date = member.joined_at.strftime('%b %d, %Y') if member.joined_at else 'N/A'
-            member_list.append((nickname, join_date, member.joined_at))  # Store join date for sorting
+    #         # Format the join date with shortened month names
+    #         join_date = member.joined_at.strftime('%b %d, %Y') if member.joined_at else 'N/A'
+    #         member_list.append((nickname, join_date, member.joined_at))  # Store join date for sorting
 
-        # Sort members by join date (oldest first)
-        member_list.sort(key=lambda x: x[2])  # Sort by the actual join date
+    #     # Sort members by join date (oldest first)
+    #     member_list.sort(key=lambda x: x[2])  # Sort by the actual join date
 
-        # Create a formatted string with bullet numbers
-        formatted_member_list = "\n".join(f"{i + 1}. {nickname} [{join_date}]" for i, (nickname, join_date, _) in enumerate(member_list))
+    #     # Create a formatted string with bullet numbers
+    #     formatted_member_list = "\n".join(f"{i + 1}. {nickname} [{join_date}]" for i, (nickname, join_date, _) in enumerate(member_list))
 
-        # Create an embed for the response with dark red color
-        embed = discord.Embed(
-            title="Members in this server",
-            description="Member | When they joined the server\n" + formatted_member_list,  # Added clarification
-            color=discord.Color.dark_red()  # Change color to dark red
-        )
+    #     # Create an embed for the response with dark red color
+    #     embed = discord.Embed(
+    #         title="Members in this server",
+    #         description="Member | When they joined the server\n" + formatted_member_list,  # Added clarification
+    #         color=discord.Color.dark_red()  # Change color to dark red
+    #     )
 
-        # Send the embed in the channel
-        await message.channel.send(embed=embed)
+    #     # Send the embed in the channel
+    #     await message.channel.send(embed=embed)
 
     
 
     # Check if the message content is the trigger for listing join dates
-    if message.content.lower() == 'jdlist':
-        # Check if the user has permission
-        #if message.author.id != 340485392434200576:
-        #    await message.channel.send("You do not have permission to use this command.")
-        #    return
+    # if message.content.lower() == 'jdlist':
+    #     # Check if the user has permission
+    #     #if message.author.id != 340485392434200576:
+    #     #    await message.channel.send("You do not have permission to use this command.")
+    #     #    return
 
-        guild = message.guild  # Get the guild (server) where the message was sent
+    #     guild = message.guild  # Get the guild (server) where the message was sent
         
-        # Create a list to hold member names and account creation dates
-        account_list = []
+    #     # Create a list to hold member names and account creation dates
+    #     account_list = []
         
-        # Fetch all members using an async for loop
-        async for member in guild.fetch_members():
-            # Use nickname if available, otherwise use username
-            nickname = member.nick if member.nick else member.name
+    #     # Fetch all members using an async for loop
+    #     async for member in guild.fetch_members():
+    #         # Use nickname if available, otherwise use username
+    #         nickname = member.nick if member.nick else member.name
             
-            # Format the account creation date with shortened month names
-            account_creation_date = member.created_at.strftime('%b %d, %Y') if member.created_at else 'N/A'
-            account_list.append((nickname, account_creation_date, member.created_at))  # Store nickname, account creation date, and actual date
+    #         # Format the account creation date with shortened month names
+    #         account_creation_date = member.created_at.strftime('%b %d, %Y') if member.created_at else 'N/A'
+    #         account_list.append((nickname, account_creation_date, member.created_at))  # Store nickname, account creation date, and actual date
 
-        # Sort members by account creation date (oldest first)
-        account_list.sort(key=lambda x: x[2])  # Sort by the actual account creation date
+    #     # Sort members by account creation date (oldest first)
+    #     account_list.sort(key=lambda x: x[2])  # Sort by the actual account creation date
 
-        # Create a formatted string with bullet numbers
-        formatted_account_list = "\n".join(f"{i + 1}. {nickname} [{account_creation_date}]" for i, (nickname, account_creation_date, _) in enumerate(account_list))
+    #     # Create a formatted string with bullet numbers
+    #     formatted_account_list = "\n".join(f"{i + 1}. {nickname} [{account_creation_date}]" for i, (nickname, account_creation_date, _) in enumerate(account_list))
 
-        # Create an embed for the response with dark red color
-        embed = discord.Embed(
-            title="Members' Account Creation Dates",
-            description=formatted_account_list,
-            color=discord.Color.dark_red()  # Change color to dark red
+    #     # Create an embed for the response with dark red color
+    #     embed = discord.Embed(
+    #         title="Members' Account Creation Dates",
+    #         description=formatted_account_list,
+    #         color=discord.Color.dark_red()  # Change color to dark red
+    #     )
+
+    #     # Send the embed in the channel
+    #     await message.channel.send(embed=embed)
+
+
+# weather stuff
+    # if message.content.lower().startswith('weather'):
+    #     # Get the content after 'weather'
+    #     query = message.content[7:].strip()
+        
+    #     if not query:
+    #         await message.channel.send("Please provide a location or mention a user. Example: weather London,UK or weather @username")
+    #         return
+
+    #     # Check if it's a user mention
+    #     if query.startswith('<@') and query.endswith('>'):
+    #         # Extract user ID from mention
+    #         user_id = query[2:-1]  # Remove <@ and >
+    #         if user_id.startswith('!'): # Handle nicknames
+    #             user_id = user_id[1:]
+            
+    #         # Look up user's location in mapping
+    #         if user_id in USER_LOCATION_MAPPING:
+    #             username, location = USER_LOCATION_MAPPING[user_id]
+    #         else:
+    #             await message.channel.send("This user's location isn't registered in my database.")
+    #             return
+    #     else:
+    #         # Use the provided location directly
+    #         location = query
+
+    #     try:
+    #         async with aiohttp.ClientSession() as session:
+    #             # Get coordinates for location
+    #             geocoding_url = f"http://api.openweathermap.org/geo/1.0/direct?q={location}&limit=1&appid={WEATHER_API_KEY}"
+    #             async with session.get(geocoding_url) as response:
+    #                 if response.status != 200:
+    #                     await message.channel.send("Sorry, I couldn't find that location.")
+    #                     return
+                    
+    #                 geocode_data = await response.json()
+    #                 if not geocode_data:
+    #                     await message.channel.send("Sorry, I couldn't find that location.")
+    #                     return
+
+    #                 lat = geocode_data[0]['lat']
+    #                 lon = geocode_data[0]['lon']
+    #                 location_name = geocode_data[0]['name']
+    #                 country = geocode_data[0]['country']
+
+    #             # Get weather data
+    #             weather_url = f"http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={WEATHER_API_KEY}&units=metric"
+    #             async with session.get(weather_url) as response:
+    #                 if response.status != 200:
+    #                     await message.channel.send("Sorry, I couldn't fetch the weather data.")
+    #                     return
+                    
+    #                 weather_data = await response.json()
+
+    #         # Extract weather information
+    #         temperature = round(weather_data['main']['temp'])
+    #         condition = weather_data['weather'][0]['description']
+    #         temp_max = round(weather_data['main']['temp_max'])
+    #         temp_min = round(weather_data['main']['temp_min'])
+
+    #         # Prepare weather message
+    #         if query.startswith('<@'):
+    #             # If it was a user mention, include their username
+    #             weather_message = (
+    #                 f"For **{username}**, it's **{condition}** and **{temperature} °C** in **{location_name}**, {country} today. "
+    #                 f"They can expect highs of {temp_max} °C and lows of {temp_min} °C."
+    #             )
+    #         else:
+    #             weather_message = (
+    #                 f"It's **{condition}** and **{temperature} °C** in **{location_name}**, {country} today. "
+    #                 f"Expect highs of {temp_max} °C and lows of {temp_min} °C."
+    #             )
+            
+    #         await message.channel.send(weather_message)
+
+    #     except Exception as e:
+    #         await message.channel.send(f"An error occurred while fetching weather data: {str(e)}")    
+    
+
+    if message.content.lower().strip() == "-a uptime":
+        if message.author.id != 223689629990125569:
+            await message.channel.send("You do not have permission to use this command.")
+            return
+
+        uptime_seconds = int(time.time() - start_time)
+        hours, remainder = divmod(uptime_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+
+        await message.channel.send(
+            f"I've been online for **{hours}h {minutes}m {seconds}s**."
         )
 
-        # Send the embed in the channel
-        await message.channel.send(embed=embed)
+    if message.content.lower().startswith("-a purge"):
+        if message.author.id != 223689629990125569:
+            await message.channel.send("You do not have permission to use this command.")
+            return
 
-    if message.content.lower() == "!refresh":
+        parts = message.content.strip().split()
+
+        if len(parts) != 3 or not parts[2].isdigit():
+            await message.channel.send("Invalid syntax. Use `-a purge [number]`.")
+            return
+
+        count = int(parts[2])
+
+        if not message.channel.permissions_for(message.guild.me).manage_messages:
+            await message.channel.send("I don't have permission to delete messages in this channel.")
+            return
+
+        # Purge up to `count` messages before this one
+        deleted = await message.channel.purge(limit=count + 1, check=lambda m: m.id != message.id)
+
+        await message.channel.send(f"Deleted {len(deleted)} messages.")
+
+        # Send and delete confirmation after a few seconds
+        # confirm_msg = await message.channel.send(f"Deleted {len(deleted)} messages.")
+        # await asyncio.sleep(5)
+        # await confirm_msg.delete()
+
+    if message.content.lower() == "-a refresh":
         if message.author.guild_permissions.administrator:
             try:
                 await tree.sync(guild=message.guild)
@@ -471,140 +595,241 @@ async def on_message(message):
         else:
             await message.channel.send("You need to be an admin to use this command.")
 
-# weather stuff
-    if message.content.lower().startswith('weather'):
-        # Get the content after 'weather'
-        query = message.content[7:].strip()
-        
-        if not query:
-            await message.channel.send("Please provide a location or mention a user. Example: weather London,UK or weather @username")
+    if message.content.lower() in ["-a guilds"]:
+        if message.author.id != 223689629990125569: #admin ID
+            await message.channel.send("You do not have permission to use this command.")
             return
 
-        # Check if it's a user mention
-        if query.startswith('<@') and query.endswith('>'):
-            # Extract user ID from mention
-            user_id = query[2:-1]  # Remove <@ and >
-            if user_id.startswith('!'): # Handle nicknames
-                user_id = user_id[1:]
-            
-            # Look up user's location in mapping
-            if user_id in USER_LOCATION_MAPPING:
-                username, location = USER_LOCATION_MAPPING[user_id]
-            else:
-                await message.channel.send("This user's location isn't registered in my database.")
-                return
+        guilds = client.guilds
+        if guilds:
+            guild_list = "\n".join(
+                [f"- **{guild.name}** (ID: {guild.id}, Members: **{guild.member_count}**)" for guild in guilds]
+            )
+            await message.channel.send(f"**The bot is in the following servers:**\n{guild_list}")
         else:
-            # Use the provided location directly
-            location = query
+            await message.channel.send("**The bot is not in any servers.**")
+        return
+    
+    if message.content.lower().startswith("-a fquit"):
+        if message.author.id != 223689629990125569:
+            await message.channel.send("You do not have permission to use this command.")
+            return
+
+        parts = message.content.strip().split()
+
+    # Expect exactly 3 parts: ["-a", "fquit", "<guild_id>"]
+        if len(parts) != 3:
+            return  # silently ignore bad format
+
+        if not parts[2].isdigit():
+            await message.channel.send("Invalid syntax. Use `-a fquit [guild_id]`.")
+            return
+
+        guild_id = int(parts[2])
+        guild = discord.utils.get(client.guilds, id=guild_id)
+
+        if guild:
+            await guild.leave()
+            await message.channel.send(f"✅ Left server: **{guild.name}** (ID: {guild.id})")
+        else:
+            await message.channel.send("Guild not found or the bot is not in that server.")
+
+    if message.content.lower().strip() == "-a desc list":
+        if message.author.id != 223689629990125569:
+            await message.channel.send("You do not have permission to use this command.")
+            return
+
+        data = load_descriptions()
+
+        if not data:
+            await message.channel.send("No descriptions have been set yet.")
+            return
+
+        embed = discord.Embed(
+            title="Public Descriptions",
+            description="Here are all saved user descriptions.",
+            color=discord.Color.dark_teal()
+        )
+
+        for uid, desc in data.items():
+            try:
+                user = await message.guild.fetch_member(int(uid))
+                embed.add_field(name=user.display_name, value=desc, inline=False)
+            except:
+                embed.add_field(name=f"Unknown User ({uid})", value=desc, inline=False)
+
+        await message.channel.send(embed=embed)
+
+    if message.content.lower().strip() == "-a desc clear":
+        if message.author.id != 223689629990125569:
+            await message.channel.send("You do not have permission to use this command.")
+            return
+
+        save_descriptions({})
+        await message.channel.send("✅ All descriptions have been cleared.")
+
+    if message.content.lower().startswith("-a desc"):
+        if message.author.id != 223689629990125569:
+            return  # Silently ignore non-admins
+
+        parts = message.content.strip().split()
+
+        if len(parts) < 3:
+            return  # Silently ignore bad input
+
+        # Try to resolve the user
+        target_user = None
+        user_token = parts[2] if parts[2].isdigit() else parts[1]
+
+        if message.mentions:
+            target_user = message.mentions[0]
+        elif user_token.isdigit():
+            try:
+                target_user = await message.guild.fetch_member(int(user_token))
+            except:
+                return  # Silently ignore if user ID is invalid
+        else:
+            return  # Silently ignore if no mention or ID
+
+        uid = str(target_user.id)
+        data = load_descriptions()
+
+        # Reconstruct description from remaining message
+        try:
+            desc_start = message.content.index(user_token) + len(user_token)
+            new_desc = message.content[desc_start:].strip()
+        except:
+            return  # Silently ignore parsing errors
+
+        if not new_desc:
+            return  # Silently ignore if no description given
+
+        data[uid] = new_desc
+        save_descriptions(data)
+        await message.channel.send(f"✅ Updated description for **{target_user.display_name}**.")
+
+    if message.content.lower().strip() == "-a shutdown":
+        if message.author.id != 223689629990125569:
+            await message.channel.send("You do not have permission to use this command.")
+            return
+
+        await message.channel.send("Shutting down.")
+        await client.close()
+
+
+    if message.content.lower().startswith("-a broadcast"):
+        if message.author.id != 223689629990125569:
+            await message.channel.send("You do not have permission to use this command.")
+            return
+
+        parts = message.content.strip().split()
+
+        if len(parts) < 3:
+            return  # not enough to proceed
+
+        target_channel = None
+        channel_arg = parts[2]
+
+        # Try #mention first
+        if message.channel_mentions:
+            target_channel = message.channel_mentions[0]
+        # Else try raw ID
+        elif channel_arg.isdigit():
+            target_channel = client.get_channel(int(channel_arg))
+
+        if not target_channel:
+            return  # silently ignore if no valid channel
+
+        # Figure out where the message starts
+        try:
+            mention_text = f"<#{target_channel.id}>" if message.channel_mentions else channel_arg
+            msg_start = message.content.index(mention_text) + len(mention_text)
+            announcement = message.content[msg_start:].strip()
+        except:
+            return
+
+        if not announcement:
+            return  # silently ignore if no message to send
 
         try:
-            async with aiohttp.ClientSession() as session:
-                # Get coordinates for location
-                geocoding_url = f"http://api.openweathermap.org/geo/1.0/direct?q={location}&limit=1&appid={WEATHER_API_KEY}"
-                async with session.get(geocoding_url) as response:
-                    if response.status != 200:
-                        await message.channel.send("Sorry, I couldn't find that location.")
-                        return
-                    
-                    geocode_data = await response.json()
-                    if not geocode_data:
-                        await message.channel.send("Sorry, I couldn't find that location.")
-                        return
+            await target_channel.send(announcement)
+            await message.channel.send(f"✅ Announcement sent to {target_channel.mention}.")
+        except discord.Forbidden:
+            await message.channel.send(f"I don't have permission to send messages in {target_channel.mention}.")
 
-                    lat = geocode_data[0]['lat']
-                    lon = geocode_data[0]['lon']
-                    location_name = geocode_data[0]['name']
-                    country = geocode_data[0]['country']
+    if message.content.lower().strip() == "-a role list":
+        if message.author.id != 223689629990125569:
+            await message.channel.send("You do not have permission to use this command.")
+            return
 
-                # Get weather data
-                weather_url = f"http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={WEATHER_API_KEY}&units=metric"
-                async with session.get(weather_url) as response:
-                    if response.status != 200:
-                        await message.channel.send("Sorry, I couldn't fetch the weather data.")
-                        return
-                    
-                    weather_data = await response.json()
+        roles = message.guild.roles[1:]  # Exclude @everyone
+        if not roles:
+            await message.channel.send("No roles found in this server.")
+            return
 
-            # Extract weather information
-            temperature = round(weather_data['main']['temp'])
-            condition = weather_data['weather'][0]['description']
-            temp_max = round(weather_data['main']['temp_max'])
-            temp_min = round(weather_data['main']['temp_min'])
+        embed = discord.Embed(
+            title="📜 Role List",
+            description="Each role and its assigned members",
+            color=discord.Color.dark_gold()
+        )
 
-            # Prepare weather message
-            if query.startswith('<@'):
-                # If it was a user mention, include their username
-                weather_message = (
-                    f"For **{username}**, it's **{condition}** and **{temperature} °C** in **{location_name}**, {country} today. "
-                    f"They can expect highs of {temp_max} °C and lows of {temp_min} °C."
-                )
-            else:
-                weather_message = (
-                    f"It's **{condition}** and **{temperature} °C** in **{location_name}**, {country} today. "
-                    f"Expect highs of {temp_max} °C and lows of {temp_min} °C."
-                )
-            
-            await message.channel.send(weather_message)
+        for role in sorted(roles, key=lambda r: r.position, reverse=True):
+            members = [member.display_name for member in role.members]
+            if members:
+                member_list = ", ".join(members[:10])
+                extra = f" and {len(members) - 10} more..." if len(members) > 10 else ""
+                embed.add_field(name=f"{role.name} ({len(members)})", value=member_list + extra, inline=False)
 
-        except Exception as e:
-            await message.channel.send(f"An error occurred while fetching weather data: {str(e)}")    
-    
+        await message.channel.send(embed=embed)
 
-    # formerly listserv command: Only accessible by the bot owner
-    # lists all servers the bot is in
+    if message.content.lower().strip() == "-a help":
+        if message.author.id != 223689629990125569:
+            return
 
-    #if message.content.lower() in ["ww -guilds", "worldwise -guilds"]:
-        #if message.author.id != 223689629990125569: #admin ID
-           # await message.channel.send("You do not have permission to use this command.")
-           # return
+        with open("admin_command_help.txt", "r", encoding="utf-8") as f:
+            help_text = f.read()
 
-    #    guilds = client.guilds
-     #   if guilds:
-      #      guild_list = "\n".join(
-     #           [f"- **{guild.name}** (ID: {guild.id}, Members: **{guild.member_count}**)" for guild in guilds]
-     #       )
-     #       await message.channel.send(f"**The bot is in the following servers:**\n{guild_list}")
-     #   else:
-     #       await message.channel.send("**The bot is not in any servers.**")
-     #   return
+        await message.channel.send(help_text)
+
+
 
     # lists some basic server information - commented out admin restrictor for now 
-    if message.content.lower() in ["serverinfo", "svinfo"]:
-        #if message.author.id != 340485392434200576: #admin ID
-            #await message.channel.send("You do not have permission to use this command.")
-            #return
+    # if message.content.lower() in ["serverinfo", "svinfo"]:
+    #     #if message.author.id != 340485392434200576: #admin ID
+    #         #await message.channel.send("You do not have permission to use this command.")
+    #         #return
 
-        guild = message.guild
-        if guild:
-            embed = discord.Embed(title=f"Server Info for **{guild.name}**", color=discord.Color.blue())
-            embed.add_field(name="Server ID", value=guild.id, inline=False)
-            embed.add_field(name="Owner", value="Who knows?", inline=False)
-            embed.add_field(name="Member Count", value=guild.member_count, inline=False)
-            embed.add_field(name="Boost Count", value=guild.premium_subscription_count, inline=False)
-            embed.add_field(name="Text Channels", value=len(guild.text_channels), inline=False)
-            embed.add_field(name="Voice Channels", value=len(guild.voice_channels), inline=False)
-            embed.add_field(name="Created At", value=guild.created_at.strftime('%Y-%m-%d %H:%M:%S'), inline=False)
+    #     guild = message.guild
+    #     if guild:
+    #         embed = discord.Embed(title=f"Server Info for **{guild.name}**", color=discord.Color.blue())
+    #         embed.add_field(name="Server ID", value=guild.id, inline=False)
+    #         embed.add_field(name="Owner", value="Who knows?", inline=False)
+    #         embed.add_field(name="Member Count", value=guild.member_count, inline=False)
+    #         embed.add_field(name="Boost Count", value=guild.premium_subscription_count, inline=False)
+    #         embed.add_field(name="Text Channels", value=len(guild.text_channels), inline=False)
+    #         embed.add_field(name="Voice Channels", value=len(guild.voice_channels), inline=False)
+    #         embed.add_field(name="Created At", value=guild.created_at.strftime('%Y-%m-%d %H:%M:%S'), inline=False)
             
-            # Set server banner if available
-            #if guild.banner:
-            #    embed.set_image(url=guild.banner.url)
+    #         # Set server banner if available
+    #         #if guild.banner:
+    #         #    embed.set_image(url=guild.banner.url)
 
-            # Set server icon as thumbnail if available
-            if guild.icon:
-                embed.set_thumbnail(url=guild.icon.url)
+    #         # Set server icon as thumbnail if available
+    #         if guild.icon:
+    #             embed.set_thumbnail(url=guild.icon.url)
 
-            await message.channel.send(embed=embed)
-        else:
-            await message.channel.send("This command must be run in a server.")
+    #         await message.channel.send(embed=embed)
+    #     else:
+    #         await message.channel.send("This command must be run in a server.")
 
 
-    # Handle 'convert' or variations like 'Convert' and 'conv' (short response)
-    if message.content.lower().startswith('convert ') or message.content.lower().startswith('conv '):
-        await handle_conversion(message, full_response=False)
+    # # Handle 'convert' or variations like 'Convert' and 'conv' (short response)
+    # if message.content.lower().startswith('convert ') or message.content.lower().startswith('conv '):
+    #     await handle_conversion(message, full_response=False)
 
-    # Handle 'convertfull' or variations like 'Convertfull' and 'convf' (full response)
-    elif message.content.lower().startswith('convertfull') or message.content.lower().startswith('convf'):
-        await handle_conversion(message, full_response=True)
+    # # Handle 'convertfull' or variations like 'Convertfull' and 'convf' (full response)
+    # elif message.content.lower().startswith('convertfull') or message.content.lower().startswith('convf'):
+    #     await handle_conversion(message, full_response=True)
 
     #elif message.content.lower().startswith('wwhelp'):
         #embed = get_weather_help_embed()  # Get the weather help embed
@@ -620,9 +845,9 @@ async def on_message(message):
 #        await handle_time_command(message)
 
     # Handle 'clist' for listing supported currencies
-    elif message.content.lower().startswith('clist'):
-        embed = get_currency_list_embed(SUPPORTED_CURRENCIES, CURRENCY_NAMES)  # Get the currency list embed
-        await message.channel.send(embed=embed)
+    # elif message.content.lower().startswith('clist'):
+    #     embed = get_currency_list_embed(SUPPORTED_CURRENCIES, CURRENCY_NAMES)  # Get the currency list embed
+    #     await message.channel.send(embed=embed)
 
     # Handle 'thelp' for listing supported timezones
     #elif message.content.lower().startswith('thelp'):
@@ -630,9 +855,9 @@ async def on_message(message):
         #await message.channel.send(embed=embed)
     
     # Handle 'tlist' command
-    elif message.content.lower().startswith('tlist'):
-        embed = get_timezone_list_embed(timezones_dict, COUNTRY_ABBREVIATIONS)
-        await message.channel.send(embed=embed)
+    # elif message.content.lower().startswith('tlist'):
+    #     embed = get_timezone_list_embed(timezones_dict, COUNTRY_ABBREVIATIONS)
+    #     await message.channel.send(embed=embed)
 
 
 # Handle 'time' command
@@ -843,19 +1068,13 @@ async def send_error(error_message, original_message):
      #       await channel.send("This is a periodic message sent every 28 minutes. Prevents dynos sleeping on heroku.")
      #   await asyncio.sleep(500 * 60)  # Wait 28 minutes
 
-# Load secrets
-#with open("secrets.json") as f:
-   # secrets = json.load(f)
 
-#WEATHER_API_KEY = secrets["WEATHER_API_KEY"]
-#DISCORD_TOKEN = secrets["DISCORD_TOKEN"]
+# @tree.command(name="active", description="Ping to keep the bot eligible")
+# async def active_command(interaction: discord.Interaction):
+#     await interaction.response.send_message("Good job, you've executed a useless command.")
 
-
-@tree.command(name="active", description="Ping to keep the bot eligible")
-async def active_command(interaction: discord.Interaction):
-    await interaction.response.send_message("Good job, you've executed a useless command.")
-
-@tree.command(name="weathertest", description="Get the current weather for a user or location")
+#weather_command
+@tree.command(name="weather", description="Get the current weather for a user or location")
 @app_commands.describe(user_or_location="@user, city, country or abbreviation")
 async def weather_command(interaction: discord.Interaction, user_or_location: str):
     await interaction.response.defer()
@@ -929,7 +1148,7 @@ async def weather_command(interaction: discord.Interaction, user_or_location: st
         await interaction.followup.send(f"An error occurred while fetching weather data: {str(e)}")
 
 
-
+#convert_command
 @tree.command(name="convert", description="Convert between currencies")
 @app_commands.describe(
     amount="Amount to convert",
@@ -960,8 +1179,8 @@ async def convert_command(interaction: discord.Interaction, amount: float, from_
         await interaction.followup.send("Exchange rate lookup failed.")
 
 
-
-@tree.command(name="whelp", description="Show README / help pages")
+#help_command
+@tree.command(name="help", description="Show README / help pages")
 async def whelp_command(interaction: discord.Interaction):
     current_page = 0
     total_pages = len(sections)
@@ -969,6 +1188,7 @@ async def whelp_command(interaction: discord.Interaction):
     view = HelpView(current_page, total_pages)
     await interaction.response.send_message(embed=embed, view=view)
 
+#translate_command
 @tree.command(name="translate", description="Translate text to English")
 @app_commands.describe(text="The text you want translated")
 async def translate_command(interaction: discord.Interaction, text: str):
@@ -990,6 +1210,7 @@ async def translate_command(interaction: discord.Interaction, text: str):
     except Exception as e:
         await interaction.response.send_message(f"Translation error: {e}")
 
+#mlist_command
 @tree.command(name="mlist", description="List server members and join dates")
 async def mlist_command(interaction: discord.Interaction):
     guild = interaction.guild
@@ -1011,6 +1232,7 @@ async def mlist_command(interaction: discord.Interaction):
 
     await interaction.response.send_message(embed=embed)
 
+#jdlist_command
 @tree.command(name="jdlist", description="List account creation dates of members")
 async def jdlist_command(interaction: discord.Interaction):
     guild = interaction.guild
@@ -1032,19 +1254,7 @@ async def jdlist_command(interaction: discord.Interaction):
 
     await interaction.response.send_message(embed=embed)
 
-@tree.command(name="guilds", description="List all servers this bot is in (admin-only)")
-async def guilds_command(interaction: discord.Interaction):
-    if interaction.user.id != 223689629990125569:
-        await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
-        return
-
-    guilds = client.guilds
-    if guilds:
-        msg = "\n".join(f"- **{g.name}** (ID: {g.id}, Members: **{g.member_count}**)" for g in guilds)
-        await interaction.response.send_message(f"**Bot is in these servers:**\n{msg}")
-    else:
-        await interaction.response.send_message("Bot is not in any servers.")
-
+#serverinfo_command
 @tree.command(name="serverinfo", description="Display info about this server")
 async def server_info_command(interaction: discord.Interaction):
     guild = interaction.guild
@@ -1069,7 +1279,8 @@ from discord.app_commands import Parameter
 
 from discord.app_commands import Parameter
 
-@tree.command(name="timetest", description="Get current time for a user or by location")
+#time_command
+@tree.command(name="time", description="Get current time for a user or by location")
 @app_commands.describe(user_or_location="@user or a city/country/abbreviation")
 async def time_command(interaction: discord.Interaction, user_or_location: str):
     location = user_or_location.strip()
@@ -1110,7 +1321,7 @@ async def time_command(interaction: discord.Interaction, user_or_location: str):
 
 
 
-
+#timeconvert_command
 @tree.command(name="timeconvert", description="Convert time between two users or locations")
 @app_commands.describe(
     time_str="Time to convert (e.g. 5pm, 17:00)",
@@ -1176,14 +1387,6 @@ async def ping_command(interaction: discord.Interaction):
     latency = round(client.latency * 1000)
     await interaction.response.send_message(f"Pong! Latency: `{latency}ms`")
 
-@tree.command(name="uptime", description="Show how long the bot has been online")
-async def uptime_command(interaction: discord.Interaction):
-    uptime_seconds = int(time.time() - start_time)
-    hours, remainder = divmod(uptime_seconds, 3600)
-    minutes, seconds = divmod(remainder, 60)
-    await interaction.response.send_message(
-        f"I've been online for **{hours}h {minutes}m {seconds}s**."
-    )
 @tree.command(name="remind", description="Set a reminder")
 @app_commands.describe(duration="e.g. 10m, 1h, 30s", message="Reminder message")
 async def remind_command(interaction: discord.Interaction, duration: str, message: str):
@@ -1222,21 +1425,6 @@ async def convertunit_command(interaction: discord.Interaction, value: float, fr
     result = conversions[key](value)
     await interaction.response.send_message(f"{value} {from_unit} ≈ {result:.2f} {to_unit}")
 
-@tree.command(name="clear", description="Delete recent messages (admin-only)")
-@app_commands.describe(count="Number of messages to delete")
-async def clear_command(interaction: discord.Interaction, count: int):
-    await interaction.response.defer(ephemeral=True)  # Acknowledge fast
-
-    if interaction.user.id != 223689629990125569:
-        await interaction.followup.send("You do not have permission to use this command.")
-        return
-
-    if not interaction.channel.permissions_for(interaction.guild.me).manage_messages:
-        await interaction.followup.send("I don't have permission to delete messages.")
-        return
-
-    deleted = await interaction.channel.purge(limit=count + 1)
-    await interaction.followup.send(f"Deleted {len(deleted)-1} messages.")
 
 @tree.command(name="whois", description="Get info about a user")
 @app_commands.describe(user="The user to look up")
@@ -1297,108 +1485,6 @@ async def setdesc_command(interaction: discord.Interaction, description: str):
 
     await interaction.response.send_message("Your description has been saved.")
 
-@tree.command(name="descadmin", description="Set or clear another user's public description (admin-only)")
-@app_commands.describe(user="The user to update", description="The new description, or 'clear' to remove it")
-async def descadmin_command(interaction: discord.Interaction, user: discord.Member, description: str):
-    # Admin check
-    if interaction.user.id != 223689629990125569:
-        await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
-        return
-
-    uid = str(user.id)
-    data = load_descriptions()
-
-    if description.strip().lower() == "clear":
-        if uid in data:
-            del data[uid]
-            save_descriptions(data)
-            await interaction.response.send_message(f"✅ Cleared description for **{user.display_name}**.")
-        else:
-            await interaction.response.send_message(f"ℹ️ No existing description found for **{user.display_name}**.")
-    else:
-        data[uid] = description.strip()
-        save_descriptions(data)
-        await interaction.response.send_message(f"✅ Updated description for **{user.display_name}**.")
-    
-@tree.command(name="desclist", description="View all saved user descriptions (admin-only) ")
-async def desclist_command(interaction: discord.Interaction):
-    # Admin check
-    if interaction.user.id != 223689629990125569:
-        await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
-        return
-
-    data = load_descriptions()
-
-    if not data:
-        await interaction.response.send_message("No descriptions have been set yet.", ephemeral=True)
-        return
-
-    embed = discord.Embed(
-        title="📝 Public Descriptions",
-        description="Here are all saved user descriptions.",
-        color=discord.Color.dark_teal()
-    )
-
-    for uid, desc in data.items():
-        try:
-            user = await interaction.guild.fetch_member(int(uid))
-            embed.add_field(name=user.display_name, value=desc, inline=False)
-        except:
-            embed.add_field(name=f"Unknown User ({uid})", value=desc, inline=False)
-
-    await interaction.response.send_message(embed=embed)
-
-@tree.command(name="shutdown", description="Shut down the bot (admin-only)")
-async def shutdown_command(interaction: discord.Interaction):
-    if interaction.user.id != 223689629990125569:
-        await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
-        return
-
-    await interaction.response.send_message("Shutting down.")
-    await client.close()
-
-@tree.command(name="announce", description="Send a message as the bot to a specific channel (admin-only)")
-@app_commands.describe(channel="Channel to send the message in", message="Message content")
-async def announce_command(interaction: discord.Interaction, channel: discord.TextChannel, message: str):
-    if interaction.user.id != 223689629990125569:
-        await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
-        return
-
-    try:
-        await channel.send(message)
-        await interaction.response.send_message(f"✅ Announcement sent to {channel.mention}.", ephemeral=True)
-    except discord.Forbidden:
-        await interaction.response.send_message(
-            f"I don't have permission to send messages in {channel.mention}.",
-            ephemeral=True
-        )
-
-
-@tree.command(name="rolelist", description="List all roles and the members who have them (admin-only)")
-async def rolelist_command(interaction: discord.Interaction):
-    if interaction.user.id != 223689629990125569:
-        await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
-        return
-
-    roles = interaction.guild.roles[1:]  # Exclude @everyone
-    if not roles:
-        await interaction.response.send_message("No roles found in this server.", ephemeral=True)
-        return
-
-    embed = discord.Embed(
-        title="📜 Role List",
-        description="Each role and its assigned members",
-        color=discord.Color.dark_gold()
-    )
-
-    for role in sorted(roles, key=lambda r: r.position, reverse=True):
-        members = [member.display_name for member in role.members]
-        if members:
-            member_list = ", ".join(members[:10])
-            extra = f" and {len(members) - 10} more..." if len(members) > 10 else ""
-            embed.add_field(name=f"{role.name} ({len(members)})", value=member_list + extra, inline=False)
-
-    await interaction.response.send_message(embed=embed)
 
 
 client.run(DISCORD_TOKEN)

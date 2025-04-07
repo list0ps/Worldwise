@@ -1,0 +1,19 @@
+### Admin commands require `-a` prefix.
+- **desc** `clear` | `list` | `<UserID>` | `@mention`  
+    *Desc-admin: clear, change or add user descriptions.*  
+- **purge** `<count>`  
+    *Deletes a number of recent messages from the channel.*  
+- **uptime**  
+    *Displays how long the bot has been running.*  
+- **refresh**  
+    *Refreshes slash commands for the current server.*  
+- **guilds**  
+    *Lists all servers the bot is currently in.*
+- **fquit** `<guild_id>`  
+    *Force the bot to leave a specific server.*
+- **shutdown**  
+    *Shuts down the bot process.*
+- **broadcast** `#channel` | `ChannelID` `message`  
+    *Sends a message as the bot to any channel.*  
+- **role list**  
+    *Lists all roles and members in each role.*

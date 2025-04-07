@@ -273,7 +273,17 @@ class BotGUI:
             self.append_log("[INFO] chat_logs.txt does not exist yet.\n")
 
 
+# this makes launcher open as a window when double clicking exe
+#if __name__ == "__main__":
+#    root = tk.Tk()
+#    app = BotGUI(root)
+#    root.mainloop()
+
+# this makes it start minimized to system tray, this should be added to startup
 if __name__ == "__main__":
     root = tk.Tk()
     app = BotGUI(root)
+    app.start_bot()  # Automatically starts the bot
+    app.minimize_window()  # Minimises the window to tray on launch
     root.mainloop()
+

@@ -300,7 +300,6 @@ async def on_message(message):
     log_command_to_file(message.author.display_name, message.content, message.guild, message.channel)
 
 
-
     # Write stats
     with open("bot_stats.json", "w") as f:
         json.dump({
@@ -677,7 +676,7 @@ async def on_message(message):
 
         # Try to resolve the user
         target_user = None
-        user_token = parts[2] if parts[2].isdigit() else parts[1]
+        user_token = parts[2]
 
         if message.mentions:
             target_user = message.mentions[0]
@@ -685,26 +684,26 @@ async def on_message(message):
             try:
                 target_user = await message.guild.fetch_member(int(user_token))
             except:
-                return  # Silently ignore if user ID is invalid
+                return
         else:
-            return  # Silently ignore if no mention or ID
+            return
 
         uid = str(target_user.id)
         data = load_descriptions()
 
-        # Reconstruct description from remaining message
-        try:
-            desc_start = message.content.index(user_token) + len(user_token)
-            new_desc = message.content[desc_start:].strip()
-        except:
-            return  # Silently ignore parsing errors
+        # Clean and safe extraction of description
+        parts = message.content.strip().split(maxsplit=3)
+        if len(parts) < 4:
+            return
 
+        new_desc = parts[3].strip()
         if not new_desc:
-            return  # Silently ignore if no description given
+            return
 
         data[uid] = new_desc
         save_descriptions(data)
         await message.channel.send(f"✅ Updated description for **{target_user.display_name}**.")
+
 
     if message.content.lower().strip() == "-a shutdown":
         if message.author.id != 223689629990125569:

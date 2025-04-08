@@ -1,12 +1,12 @@
 import discord
 import aiohttp
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup # parsing wise's currency converter
 import re
 import os
 import json
 from pathlib import Path
-import asyncio  # Import asyncio for background tasks
+import asyncio  # for background tasks
 import pytz  # Adding this for timezone handling
 import time
 start_time = time.time()
@@ -29,9 +29,7 @@ from readme_content import (
 
 from datetime import datetime
 
-#change
-
-from dotenv import load_dotenv
+from dotenv import load_dotenv # stashing secrets
 load_dotenv()
 
 import os
@@ -42,7 +40,7 @@ WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
 command_counter = 0
 active_users = set()
 
-def log_command_to_file(user, content, guild=None, channel=None):
+def log_command_to_file(user, content, guild=None, channel=None): # initially tracked commands, now tracks all chat it can read
     log_file = "chat_logs.txt"
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     guild_name = guild.name if guild else "DM"
@@ -51,9 +49,7 @@ def log_command_to_file(user, content, guild=None, channel=None):
     with open(log_file, "a", encoding="utf-8") as f:
         f.write(f"[{timestamp}] [{guild_name}#{channel_name}] {user}: {content}\n")
 
-
-
-# Function to build an embed from a section
+# Function to build an embed from a section in help file
 def build_embed(section):
     embed = discord.Embed(
         title=section["title"],
@@ -106,7 +102,7 @@ def save_descriptions(data):
     with open(DESC_FILE, "w") as f:
         json.dump(data, f, indent=2)
 
-#web scrapper bs from chatgpt to fetch conversion info 
+# web scrapper stuff to fetch conversion info 
 def get_exchange_rate(from_currency, to_currency):
     url = f"https://wise.com/us/currency-converter/{from_currency.lower()}-to-{to_currency.lower()}-rate?amount=1000"
     response = requests.get(url)
@@ -118,7 +114,7 @@ def get_exchange_rate(from_currency, to_currency):
         rate_text = soup.find('span', class_='text-success')
         rate = float(re.search(r"\d+\.\d+", rate_text.text.strip()).group()) if rate_text else None
 
-        # Extract the 30-day high, low, average, and change
+        # Extract the 30-day high, low, average, and change — deprecated
         table_rows = soup.select('table tr')
         high_30 = float(table_rows[1].find_all('td')[1].text)
         low_30 = float(table_rows[2].find_all('td')[1].text)
@@ -130,18 +126,15 @@ def get_exchange_rate(from_currency, to_currency):
         print(f"Failed to retrieve page. Status code: {response.status_code}")
         return None, None, None, None, None, None
     
-    
-# Updated get_current_time function with additional cities for more countries
+# time function
 def get_current_time(location):
-    # Dictionary of countries, abbreviations, cities and GMT offsets
-    # Only way to support country abbreviations was to list them as separate elements (shortcoming on my end if anything)
 
-    # Normalizing input for case-insensitive matching because my friend alex is weird
+    # Normalizing input for case-insensitive matching
     location = location.strip().casefold()
 
     results = []
 
-    # Check if location is a country or abbreviation 
+    # Check if entered location is a country or abbreviation 
     if location in timezones_dict:
         for city, abbreviation, timezone, gmt_offset in timezones_dict[location]:
             tz = pytz.timezone(timezone)
@@ -161,9 +154,8 @@ def get_current_time(location):
     return None
 
 
-# Updated `convert_time` function for accurate conversions, was broken because misalignment of full names
+# convert time function, fixed misalignment of names
 def convert_time(time_str, from_location, to_location):
-    # Uses the same `timezones_dict` as in get_current_time
 
     # Normalizing inputs for case-insensitive matching
     from_location = from_location.strip().casefold()
@@ -210,14 +202,14 @@ def convert_time(time_str, from_location, to_location):
         aware_time = tz.localize(naive_time)  # Localize to source timezone
 
         for to_tz, cities in cities_by_timezone.items():
-            # Only take the first city from each timezone group
+            # Only takes the first city from each timezone group
             to_city, gmt_offset = cities[0]
             target_tz = pytz.timezone(to_tz)
             converted_time = aware_time.astimezone(target_tz)  # Convert to target timezone
 
             # Format the time in HH:MM format (24-hour time) for consistency
-            from_time = aware_time.strftime('%H:%M')  # Always format 24-hour time as HH:MM
-            to_time = converted_time.strftime('%H:%M')  # Always format 24-hour time as HH:MM
+            from_time = aware_time.strftime('%H:%M')  
+            to_time = converted_time.strftime('%H:%M')  
 
             # Check if the original time format was 12-hour (contains 'am' or 'pm')
             if 'am' in time_str or 'pm' in time_str:
@@ -231,7 +223,7 @@ def convert_time(time_str, from_location, to_location):
 
             converted_times.append(f"**{from_time}** in {from_city.title()} is **{to_time}** in {to_city.title()}, {gmt_offset}")
 
-    return list(set(converted_times))  # Remove duplicates
+    return list(set(converted_times))  
 
 
 # Function to format a time object to 12-hour or 24-hour time
@@ -244,8 +236,8 @@ def format_time(time_obj, format_12hr=True):
 
 
 TEST_GUILD_ID = 1356960708230779023
-# Initialize Discord bot with intents - probably should've been at the very top 
-# Also this was introduced in 2023 most likely, wasn't required for discord.py
+
+# Initialize Discord bot with intents 
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
@@ -258,13 +250,12 @@ test_guild = discord.Object(id=TEST_GUILD_ID)
 descriptions = load_descriptions()
 
 
-
-# Placeholder for error logging channel and startup message channel
+# Channels for bot upkeep / error logs
 ERROR_CHANNEL_ID = 1357709109071184093  # error logs
 STARTUP_CHANNEL_ID = 1357709085184884766  # channel ID for startup messages
 PERIODIC_CHANNEL_ID = 1358254137946542283  # spams 28m so heroku doesn't bonk us
 
-# startup message
+# startup events
 @client.event
 async def on_ready():
     print(f'Logged in as {client.user}')
@@ -272,19 +263,21 @@ async def on_ready():
     # Change the bot's presence
     await client.change_presence(activity=discord.Game(name='time and money.'))
 
-    # Send a startup message to the designated channel
+    # Send startup message to the designated channel
     startup_channel = client.get_channel(STARTUP_CHANNEL_ID)
     if startup_channel:
         await startup_channel.send("I am now online.")
 
 
-    #     await tree.sync(guild=test_guild) #kept for testing
+    #     await tree.sync(guild=test_guild) # Sync to guild — kept for testing
     # print("Synced slash commands to test guild.")
+
+
         await tree.sync()  # Sync globally
     print("Synced slash commands globally.")
 
     
-    # Start background task for periodic messages so Heroku doesn't go bonkers
+    # Start background task for periodic messages so Heroku doesn't kill
     #client.loop.create_task(send_periodic_message())
 
 
@@ -310,8 +303,8 @@ async def on_message(message):
         }, f)
 
 
-    # DM forwarding, sends any content (text or attachments) sent to bot's DM - to specified channel  
-  # Check if the message is in a DM (Direct Message)
+# DM forwarding logic, sends any content (text or attachments) sent to bot's DM to specified channel  
+    # Check if the message is in a DM (Direct Message)
     if isinstance(message.channel, discord.DMChannel):
         target_channel = client.get_channel(1306617117528952955)  # Replace with the target channel ID
 
@@ -336,214 +329,9 @@ async def on_message(message):
             print("Target channel not found.")
 
 # Admin-only commands
-
-
-
-    # if message.content.lower().startswith("whelp"):
-    #     current_page = 0
-    #     total_pages = len(sections)
-
-    #     # Create the initial embed
-    #     embed = build_embed(sections[current_page])  # Use the new function name
-    #     view = HelpView(current_page, total_pages)
-    #     await message.channel.send(embed=embed, view=view)
-
-    # # Handle translate command
-    # if message.content.lower().startswith('translate '):
-    #     # Extract the text to translate (everything after 'translate ')
-    #     text_to_translate = message.content[10:].strip()
-        
-    #     if not text_to_translate:
-    #         await message.channel.send("Please provide some text to translate.")
-    #         return
-            
-    #     try:
-    #         # Create URL for Google Translate
-    #         url = f"https://translate.google.com/m?sl=auto&tl=en&q={text_to_translate}"
-            
-    #         # Send request and get response
-    #         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
-    #         response = requests.get(url, headers=headers)
-            
-    #         if response.status_code == 200:
-    #             # Parse the response
-    #             soup = BeautifulSoup(response.text, 'html.parser')
-    #             # Find the translation result
-    #             result = soup.find('div', {'class': 'result-container'})
-                
-    #             if result:
-    #                 translated_text = result.text
-    #                 await message.channel.send(f"**Translation:**\n{translated_text}")
-    #             else:
-    #                 await message.channel.send("Sorry, I couldn't translate that text.")
-    #         else:
-    #             await message.channel.send("Sorry, there was an error accessing the translation service.")
-                
-    #     except Exception as e:
-    #         error_channel = client.get_channel(ERROR_CHANNEL_ID)
-    #         if error_channel:
-    #             await error_channel.send(f"Translation error: {str(e)}")
-    #         await message.channel.send("Sorry, there was an error processing your translation request.")
-
-
-    # # memlist command
-    # if message.content.lower() == 'mlist':
-    #     # Check if the user has permission
-    #     #if message.author.id != 340485392434200576:
-    #     #    await message.channel.send("You do not have permission to use this command.")
-    #     #    return
-
-    #     guild = message.guild  # Get the guild (server) where the message was sent
-        
-    #     # Create a list to hold member names and join dates
-    #     member_list = []
-        
-    #     # Fetch all members using an async for loop
-    #     async for member in guild.fetch_members():
-    #         # Use nickname if available, otherwise use username
-    #         nickname = member.nick if member.nick else member.name
-            
-    #         # Format the join date with shortened month names
-    #         join_date = member.joined_at.strftime('%b %d, %Y') if member.joined_at else 'N/A'
-    #         member_list.append((nickname, join_date, member.joined_at))  # Store join date for sorting
-
-    #     # Sort members by join date (oldest first)
-    #     member_list.sort(key=lambda x: x[2])  # Sort by the actual join date
-
-    #     # Create a formatted string with bullet numbers
-    #     formatted_member_list = "\n".join(f"{i + 1}. {nickname} [{join_date}]" for i, (nickname, join_date, _) in enumerate(member_list))
-
-    #     # Create an embed for the response with dark red color
-    #     embed = discord.Embed(
-    #         title="Members in this server",
-    #         description="Member | When they joined the server\n" + formatted_member_list,  # Added clarification
-    #         color=discord.Color.dark_red()  # Change color to dark red
-    #     )
-
-    #     # Send the embed in the channel
-    #     await message.channel.send(embed=embed)
-
     
-
-    # Check if the message content is the trigger for listing join dates
-    # if message.content.lower() == 'jdlist':
-    #     # Check if the user has permission
-    #     #if message.author.id != 340485392434200576:
-    #     #    await message.channel.send("You do not have permission to use this command.")
-    #     #    return
-
-    #     guild = message.guild  # Get the guild (server) where the message was sent
-        
-    #     # Create a list to hold member names and account creation dates
-    #     account_list = []
-        
-    #     # Fetch all members using an async for loop
-    #     async for member in guild.fetch_members():
-    #         # Use nickname if available, otherwise use username
-    #         nickname = member.nick if member.nick else member.name
-            
-    #         # Format the account creation date with shortened month names
-    #         account_creation_date = member.created_at.strftime('%b %d, %Y') if member.created_at else 'N/A'
-    #         account_list.append((nickname, account_creation_date, member.created_at))  # Store nickname, account creation date, and actual date
-
-    #     # Sort members by account creation date (oldest first)
-    #     account_list.sort(key=lambda x: x[2])  # Sort by the actual account creation date
-
-    #     # Create a formatted string with bullet numbers
-    #     formatted_account_list = "\n".join(f"{i + 1}. {nickname} [{account_creation_date}]" for i, (nickname, account_creation_date, _) in enumerate(account_list))
-
-    #     # Create an embed for the response with dark red color
-    #     embed = discord.Embed(
-    #         title="Members' Account Creation Dates",
-    #         description=formatted_account_list,
-    #         color=discord.Color.dark_red()  # Change color to dark red
-    #     )
-
-    #     # Send the embed in the channel
-    #     await message.channel.send(embed=embed)
-
-
-# weather stuff
-    # if message.content.lower().startswith('weather'):
-    #     # Get the content after 'weather'
-    #     query = message.content[7:].strip()
-        
-    #     if not query:
-    #         await message.channel.send("Please provide a location or mention a user. Example: weather London,UK or weather @username")
-    #         return
-
-    #     # Check if it's a user mention
-    #     if query.startswith('<@') and query.endswith('>'):
-    #         # Extract user ID from mention
-    #         user_id = query[2:-1]  # Remove <@ and >
-    #         if user_id.startswith('!'): # Handle nicknames
-    #             user_id = user_id[1:]
-            
-    #         # Look up user's location in mapping
-    #         if user_id in USER_LOCATION_MAPPING:
-    #             username, location = USER_LOCATION_MAPPING[user_id]
-    #         else:
-    #             await message.channel.send("This user's location isn't registered in my database.")
-    #             return
-    #     else:
-    #         # Use the provided location directly
-    #         location = query
-
-    #     try:
-    #         async with aiohttp.ClientSession() as session:
-    #             # Get coordinates for location
-    #             geocoding_url = f"http://api.openweathermap.org/geo/1.0/direct?q={location}&limit=1&appid={WEATHER_API_KEY}"
-    #             async with session.get(geocoding_url) as response:
-    #                 if response.status != 200:
-    #                     await message.channel.send("Sorry, I couldn't find that location.")
-    #                     return
-                    
-    #                 geocode_data = await response.json()
-    #                 if not geocode_data:
-    #                     await message.channel.send("Sorry, I couldn't find that location.")
-    #                     return
-
-    #                 lat = geocode_data[0]['lat']
-    #                 lon = geocode_data[0]['lon']
-    #                 location_name = geocode_data[0]['name']
-    #                 country = geocode_data[0]['country']
-
-    #             # Get weather data
-    #             weather_url = f"http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={WEATHER_API_KEY}&units=metric"
-    #             async with session.get(weather_url) as response:
-    #                 if response.status != 200:
-    #                     await message.channel.send("Sorry, I couldn't fetch the weather data.")
-    #                     return
-                    
-    #                 weather_data = await response.json()
-
-    #         # Extract weather information
-    #         temperature = round(weather_data['main']['temp'])
-    #         condition = weather_data['weather'][0]['description']
-    #         temp_max = round(weather_data['main']['temp_max'])
-    #         temp_min = round(weather_data['main']['temp_min'])
-
-    #         # Prepare weather message
-    #         if query.startswith('<@'):
-    #             # If it was a user mention, include their username
-    #             weather_message = (
-    #                 f"For **{username}**, it's **{condition}** and **{temperature} °C** in **{location_name}**, {country} today. "
-    #                 f"They can expect highs of {temp_max} °C and lows of {temp_min} °C."
-    #             )
-    #         else:
-    #             weather_message = (
-    #                 f"It's **{condition}** and **{temperature} °C** in **{location_name}**, {country} today. "
-    #                 f"Expect highs of {temp_max} °C and lows of {temp_min} °C."
-    #             )
-            
-    #         await message.channel.send(weather_message)
-
-    #     except Exception as e:
-    #         await message.channel.send(f"An error occurred while fetching weather data: {str(e)}")    
-    
-
-    if message.content.lower().strip() == "-a uptime":
-        if message.author.id != 223689629990125569:
+    if message.content.lower().strip() == "-a uptime": 
+        if message.author.id != 223689629990125569: #admin check
             await message.channel.send("You do not have permission to use this command.")
             return
 
@@ -572,9 +360,8 @@ async def on_message(message):
             await message.channel.send("I don't have permission to delete messages in this channel.")
             return
 
-        # Purge up to `count` messages before this one
+        # Purge up to `count` messages before deletion command
         deleted = await message.channel.purge(limit=count + 1, check=lambda m: m.id != message.id)
-
         await message.channel.send(f"Deleted {len(deleted)} messages.")
 
         # Send and delete confirmation after a few seconds
@@ -582,7 +369,7 @@ async def on_message(message):
         # await asyncio.sleep(5)
         # await confirm_msg.delete()
 
-    if message.content.lower() == "-a refresh":
+    if message.content.lower() == "-a refresh": #solely for testing purposes
         if message.author.guild_permissions.administrator:
             try:
                 await tree.sync(guild=message.guild)
@@ -593,7 +380,7 @@ async def on_message(message):
             await message.channel.send("You need to be an admin to use this command.")
 
     if message.content.lower() in ["-a guilds"]:
-        if message.author.id != 223689629990125569: #admin ID
+        if message.author.id != 223689629990125569: 
             await message.channel.send("You do not have permission to use this command.")
             return
 
@@ -614,9 +401,9 @@ async def on_message(message):
 
         parts = message.content.strip().split()
 
-    # Expect exactly 3 parts: ["-a", "fquit", "<guild_id>"]
+    # Expects exactly 3 parts: ["-a", "fquit", "<guild_id>"]
         if len(parts) != 3:
-            return  # silently ignore bad format
+            return  
 
         if not parts[2].isdigit():
             await message.channel.send("Invalid syntax. Use `-a fquit [guild_id]`.")
@@ -674,7 +461,7 @@ async def on_message(message):
         if len(parts) < 3:
             return  # Silently ignore bad input
 
-        # Try to resolve the user
+        # Tries to resolve the user
         target_user = None
         user_token = parts[2]
 
@@ -691,7 +478,6 @@ async def on_message(message):
         uid = str(target_user.id)
         data = load_descriptions()
 
-        # Clean and safe extraction of description
         parts = message.content.strip().split(maxsplit=3)
         if len(parts) < 4:
             return
@@ -721,12 +507,12 @@ async def on_message(message):
         parts = message.content.strip().split()
 
         if len(parts) < 3:
-            return  # not enough to proceed
+            return  
 
         target_channel = None
         channel_arg = parts[2]
 
-        # Try #mention first
+        # Try #mention-channel first
         if message.channel_mentions:
             target_channel = message.channel_mentions[0]
         # Else try raw ID
@@ -786,98 +572,6 @@ async def on_message(message):
             help_text = f.read()
 
         await message.channel.send(help_text)
-
-#test
-
-    # lists some basic server information - commented out admin restrictor for now 
-    # if message.content.lower() in ["serverinfo", "svinfo"]:
-    #     #if message.author.id != 340485392434200576: #admin ID
-    #         #await message.channel.send("You do not have permission to use this command.")
-    #         #return
-
-    #     guild = message.guild
-    #     if guild:
-    #         embed = discord.Embed(title=f"Server Info for **{guild.name}**", color=discord.Color.blue())
-    #         embed.add_field(name="Server ID", value=guild.id, inline=False)
-    #         embed.add_field(name="Owner", value="Who knows?", inline=False)
-    #         embed.add_field(name="Member Count", value=guild.member_count, inline=False)
-    #         embed.add_field(name="Boost Count", value=guild.premium_subscription_count, inline=False)
-    #         embed.add_field(name="Text Channels", value=len(guild.text_channels), inline=False)
-    #         embed.add_field(name="Voice Channels", value=len(guild.voice_channels), inline=False)
-    #         embed.add_field(name="Created At", value=guild.created_at.strftime('%Y-%m-%d %H:%M:%S'), inline=False)
-            
-    #         # Set server banner if available
-    #         #if guild.banner:
-    #         #    embed.set_image(url=guild.banner.url)
-
-    #         # Set server icon as thumbnail if available
-    #         if guild.icon:
-    #             embed.set_thumbnail(url=guild.icon.url)
-
-    #         await message.channel.send(embed=embed)
-    #     else:
-    #         await message.channel.send("This command must be run in a server.")
-
-
-    # # Handle 'convert' or variations like 'Convert' and 'conv' (short response)
-    # if message.content.lower().startswith('convert ') or message.content.lower().startswith('conv '):
-    #     await handle_conversion(message, full_response=False)
-
-    # # Handle 'convertfull' or variations like 'Convertfull' and 'convf' (full response)
-    # elif message.content.lower().startswith('convertfull') or message.content.lower().startswith('convf'):
-    #     await handle_conversion(message, full_response=True)
-
-    #elif message.content.lower().startswith('wwhelp'):
-        #embed = get_weather_help_embed()  # Get the weather help embed
-        #await message.channel.send(embed=embed)
-    
-    # Handle 'chelp' for showing syntax and examples
-    #elif message.content.lower().startswith('chelp'):
-        #embed = get_currency_help_embed()  # Get the currency help embed
-        #await message.channel.send(embed=embed)
-
-# Adding this to the on_message handler to handle the `time` command
-#    elif message.content.lower().startswith('time '):
-#        await handle_time_command(message)
-
-    # Handle 'clist' for listing supported currencies
-    # elif message.content.lower().startswith('clist'):
-    #     embed = get_currency_list_embed(SUPPORTED_CURRENCIES, CURRENCY_NAMES)  # Get the currency list embed
-    #     await message.channel.send(embed=embed)
-
-    # Handle 'thelp' for listing supported timezones
-    #elif message.content.lower().startswith('thelp'):
-        #embed = get_time_help_embed()  # Get the time help embed
-        #await message.channel.send(embed=embed)
-    
-    # Handle 'tlist' command
-    # elif message.content.lower().startswith('tlist'):
-    #     embed = get_timezone_list_embed(timezones_dict, COUNTRY_ABBREVIATIONS)
-    #     await message.channel.send(embed=embed)
-
-
-# Handle 'time' command
-#    elif message.content.lower().startswith('time '):
-#        location_name = message.content[5:].strip()
-#        times = get_current_time(location_name)
-#        if times:
-            # Capitalize only the first letter of each word in the country name
-#            formatted_times = [
- #               time.replace(location_name.upper(), location_name.title()) for time in times
- #           ]
-  #          await message.channel.send("\n".join(formatted_times))
-   #     else:
-    #        await message.channel.send(
-     #           "Timezone(s) unsupported - type 'tlist' for supported timezones and cities."
-      #      )
-
-    
-
-    
-# Handle 'timec' command
-  #  elif message.content.lower().startswith('timec ') or message.content.lower().startswith('timeconvert'):
-  #      await handle_timec_command(message)
-
 
 
 # function to fetch time for a specific user from user_timezone_mapping

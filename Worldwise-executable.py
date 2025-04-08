@@ -713,7 +713,6 @@ async def on_message(message):
         await message.channel.send("Shutting down.")
         await client.close()
 
-
     if message.content.lower().startswith("-a broadcast"):
         if message.author.id != 223689629990125569:
             await message.channel.send("You do not have permission to use this command.")

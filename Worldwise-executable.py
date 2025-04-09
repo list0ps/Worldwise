@@ -414,52 +414,55 @@ async def on_message(message):
 # Prune keyword in #channel
 
     if message.content.lower().startswith("-a prune"):
-            if message.author.id != 223689629990125569:  # Check if the user is the admin
-                await message.channel.send("You do not have permission to use this command.")
-                return
+        if message.author.id != 223689629990125569:  # Check if the user is the admin
+            await message.channel.send("You do not have permission to use this command.")
+            return
 
-            parts = message.content.strip().split(maxsplit=3)
-            if len(parts) < 4:
-                await message.channel.send("Usage: `-a prune #channel|channel_id <keyword>`.")
-                return
+        parts = message.content.strip().split(maxsplit=3)
+        if len(parts) < 4:
+            await message.channel.send("Usage: `-a prune #channel|channel_id <keyword>`.")
+            return
 
-            channel_arg = parts[2]
-            keyword = parts[3].lower()
+        channel_arg = parts[2]
+        keyword = parts[3].lower()
 
-            # Resolve channel
-            target_channel = None
-            if message.channel_mentions:
-                target_channel = message.channel_mentions[0]
-            elif channel_arg.isdigit():
-                target_channel = client.get_channel(int(channel_arg))
+        # Resolve channel
+        target_channel = None
+        if message.channel_mentions:
+            target_channel = message.channel_mentions[0]
+        elif channel_arg.isdigit():
+            target_channel = client.get_channel(int(channel_arg))
 
-            if not target_channel:
-                await message.channel.send("Could not find the specified channel.")
-                return
+        if not target_channel:
+            await message.channel.send("Could not find the specified channel.")
+            return
 
-            # Send initial status message
-            status_msg = await message.channel.send(f"Deleting messages containing '{keyword}' in {target_channel.mention}...")
+        # Send initial status message
+        status_msg = await message.channel.send(f"Deleting messages containing '{keyword}' in {target_channel.mention}...")
 
-            # Fetch and delete messages containing the keyword
-            total_deleted = 0
-            try:
-                async for msg in target_channel.history(limit=None):
-                    if keyword in msg.content.lower():
-                        await msg.delete()
-                        total_deleted += 1
+        # Fetch and delete messages containing the keyword
+        total_deleted = 0
+        last_update = time.time()  # Initialize timer for status updates
 
-                        # Provide status updates
-                        if total_deleted % 1 == 0:  # Update for every 1 messages deleted
-                            await status_msg.edit(content=f"Deleted {total_deleted} messages so far... ⏳")
+        try:
+            async for msg in target_channel.history(limit=None):
+                if keyword in msg.content.lower():
+                    await msg.delete()
+                    total_deleted += 1
 
-            except discord.Forbidden:
-                await status_msg.edit(content="I don't have permission to delete messages in that channel.")
-                return
-            except Exception as e:
-                await status_msg.edit(content=f"Error during deletion: {e}")
-                return
+                    # Provide status updates every 5 seconds
+                    if time.time() - last_update >= 5:
+                        await status_msg.edit(content=f"Deleted **{total_deleted}** messages so far... ⏳")
+                        last_update = time.time()  # Reset the timer
 
-            await status_msg.edit(content=f"✅ Deletion complete. Total messages deleted: {total_deleted}.")
+        except discord.Forbidden:
+            await status_msg.edit(content="I don't have permission to delete messages in that channel.")
+            return
+        except Exception as e:
+            await status_msg.edit(content=f"Error during deletion: {e}")
+            return
+
+        await status_msg.edit(content=f"✅ Deletion complete. Total messages deleted: **{total_deleted}**.")
 
     if message.content.lower().startswith("-a dl"):
         if message.author.id != 223689629990125569:
@@ -793,14 +796,39 @@ async def on_message(message):
 
         await message.channel.send(embed=embed)
 
-    if message.content.lower().strip() == "-a help":
-        if message.author.id != 223689629990125569:
+    if message.content.lower() == "-a help":
+        if message.author.id != 223689629990125569:  # Check if the user is the admin
+            await message.channel.send("You do not have permission to use this command.")
             return
 
-        with open("admin_command_help.txt", "r", encoding="utf-8") as f:
-            help_text = f.read()
+        # Read the help text from the file
+        with open("admin_command_help.txt", "r", encoding="utf-8") as file:
+            help_lines = file.read().split('\n\n')  # Split by double newline to separate each command block
 
-        await message.channel.send(help_text)
+        # Create an embed object for the help message
+        embed = discord.Embed(title="Admin Commands Help", description="All commands use the `-a` prefix.", color=discord.Color.red())
+
+        # Parse each block and add to the embed
+        for block in help_lines:
+            if block.strip():  # Ensure that the block is not empty
+                lines = block.split('\n', 1)  # Split into command and description
+                if len(lines) == 2:
+                    command, description = lines
+                    # Format command with bold and add field to embed
+                    embed.add_field(name=f"**{command.strip()}**", value=description.strip(), inline=False)
+
+        # Send the embed message
+        await message.channel.send(embed=embed)
+
+
+    # if message.content.lower().strip() == "-a help":
+    #     if message.author.id != 223689629990125569:
+    #         return
+
+    #     with open("admin_command_help.txt", "r", encoding="utf-8") as f:
+    #         help_text = f.read()
+
+    #     await message.channel.send(help_text)
 
 
 # function to fetch time for a specific user from user_timezone_mapping

@@ -40,14 +40,23 @@ WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
 command_counter = 0
 active_users = set()
 
-def log_command_to_file(user, content, guild=None, channel=None): # initially tracked commands, now tracks all chat it can read
+
+
+def log_command_to_file(user, content, guild=None, channel=None):
     log_file = "chat_logs.txt"
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     guild_name = guild.name if guild else "DM"
-    channel_name = channel.name if channel else "DM"
+
+    if isinstance(channel, discord.DMChannel):
+        channel_name = "Direct Message"
+    elif hasattr(channel, "name"):
+        channel_name = channel.name
+    else:
+        channel_name = "Unknown"
 
     with open(log_file, "a", encoding="utf-8") as f:
         f.write(f"[{timestamp}] [{guild_name}#{channel_name}] {user}: {content}\n")
+
 
 # Function to build an embed from a section in help file
 def build_embed(section):
@@ -280,12 +289,44 @@ async def on_ready():
     # Start background task for periodic messages so Heroku doesn't kill
     #client.loop.create_task(send_periodic_message())
 
+# command forwarding
+@client.event
+async def on_interaction(interaction: discord.Interaction):
+    if interaction.type == discord.InteractionType.application_command:
+        log_channel = client.get_channel(1359477496382226603)
+        if not log_channel:
+            return  # Fail silently if the log channel doesn't exist
+
+        user = interaction.user
+        display_name = user.display_name
+        command_name = interaction.command.name if interaction.command else "Unknown"
+
+        # Extract options if present
+        options = []
+        if interaction.data and "options" in interaction.data:
+            for opt in interaction.data["options"]:
+                name = opt.get("name", "unknown")
+                value = opt.get("value", "null")
+                options.append(f"{name}={value}")
+        options_str = ", ".join(options) if options else "No options"
+
+        log_msg = (
+            f"Slash command used: `{command_name}` by {display_name} (ID: {user.id})\n"
+            f"Options: {options_str}"
+        )
+
+        try:
+            await log_channel.send(log_msg)
+        except discord.HTTPException:
+            pass  # Silently ignore logging failures
+
 
 @client.event
 async def on_message(message):
     if message.author == client.user:
         return
     
+
     if message.guild:
         global command_counter
     command_counter += 1
@@ -302,32 +343,30 @@ async def on_message(message):
             "updated": datetime.now().isoformat()
         }, f)
 
+    
 
-# DM forwarding logic, sends any content (text or attachments) sent to bot's DM to specified channel  
-    # Check if the message is in a DM (Direct Message)
+# DM forwarding logic 
     if isinstance(message.channel, discord.DMChannel):
-        target_channel = client.get_channel(1306617117528952955)  # Replace with the target channel ID
-
-        # Check if the target channel exists
+        target_channel = client.get_channel(1359477496382226603)
         if target_channel:
-            # Send the content of the DM (if there's any text)
+            display_name = message.author.display_name
+
             embed = discord.Embed(
                 title="New DM Received",
                 description=message.content if message.content else "[No Text]",
-                color=discord.Color.dark_teal()  # Use a green color for DM notifications
+                color=discord.Color.dark_teal()
             )
-            embed.add_field(name="From", value=f"{message.author} (ID: {message.author.id})", inline=False)
-            
-            # Forward the message embed to the target channel
+            embed.add_field(name="From", value=f"{display_name} ({message.author} | ID: {message.author.id})", inline=False)
+
             await target_channel.send(embed=embed)
 
-            # Forward any attachments (images, files)
             if message.attachments:
                 for attachment in message.attachments:
                     await target_channel.send(f"Attachment: {attachment.url}")
-        else:
-            print("Target channel not found.")
+        return  # Prevent further handling of DMs
 
+    
+    
 # Admin-only commands
     
     if message.content.lower().strip() == "-a uptime": 
@@ -540,6 +579,61 @@ async def on_message(message):
             await message.channel.send(f"✅ Announcement sent to {target_channel.mention}.")
         except discord.Forbidden:
             await message.channel.send(f"I don't have permission to send messages in {target_channel.mention}.")
+
+    # Example: -a dm <@user> or <userID> <message>
+    if message.content.lower().startswith("-a dm"):
+        # Optional: check if the author has permission
+        if message.author.id != 223689629990125569:
+            await message.channel.send("You do not have permission to use this command.")
+            return
+
+        parts = message.content.strip().split()
+        if len(parts) < 4:
+            await message.channel.send("Usage: `-a dm <@user or userID> <message>`")
+            return
+
+        # Extract the target user
+        target_user = None
+        if message.mentions:
+            target_user = message.mentions[0]
+        else:
+            user_arg = parts[2]
+            if user_arg.isdigit():
+                try:
+                    target_user = await client.fetch_user(int(user_arg))
+                except discord.NotFound:
+                    await message.channel.send("User not found.")
+                    return
+                except discord.HTTPException:
+                    await message.channel.send("Failed to fetch user.")
+                    return
+
+        if not target_user:
+            await message.channel.send("Could not resolve the user.")
+            return
+
+        # Extract the actual message
+        try:
+            mention_text = f"<@{target_user.id}>" if message.mentions else parts[2]
+            msg_start = message.content.index(mention_text) + len(mention_text)
+            dm_message = message.content[msg_start:].strip()
+        except Exception as e:
+            await message.channel.send("Failed to parse message.")
+            return
+
+        if not dm_message:
+            await message.channel.send("No message content provided.")
+            return
+
+        # Send the DM
+        try:
+            await target_user.send(dm_message)
+            await message.channel.send(f"✅ DM sent to {target_user.name}.")
+        except discord.Forbidden:
+            await message.channel.send("I can't send a DM to that user.")
+        except discord.HTTPException:
+            await message.channel.send("Failed to send the DM.")
+
 
     if message.content.lower().strip() == "-a role list":
         if message.author.id != 223689629990125569:
@@ -1097,7 +1191,7 @@ async def remind_command(interaction: discord.Interaction, duration: str, messag
     await interaction.followup.send(f"🔔 **Reminder**: {message}")
 
 @tree.command(name="convertunit", description="Convert between basic units")
-@app_commands.describe(value="Value to convert", from_unit="Unit to convert from (km<->mi, kg<->lb, or c<->f)", to_unit="Unit to convert to (km<->mi, kg<->lb, or c<->f)")
+@app_commands.describe(value="Value to convert", from_unit="Unit to convert from (km<->mi, kg<->lb, c<->f, or m2<->sqft)", to_unit="Unit to convert to (km<->mi, kg<->lb, c<->f, or m2<->sqft)")
 async def convertunit_command(interaction: discord.Interaction, value: float, from_unit: str, to_unit: str):
     from_unit = from_unit.lower()
     to_unit = to_unit.lower()
@@ -1108,15 +1202,18 @@ async def convertunit_command(interaction: discord.Interaction, value: float, fr
         ("lb", "kg"): lambda v: v / 2.20462,
         ("c", "f"): lambda v: (v * 9/5) + 32,
         ("f", "c"): lambda v: (v - 32) * 5/9,
+        ("m2", "sqft"): lambda v: v * 10.7639,
+        ("sqft", "m2"): lambda v: v / 10.7639,
     }
 
     key = (from_unit, to_unit)
     if key not in conversions:
-        await interaction.response.send_message("Unsupported conversion. Try km<->mi, kg<->lb, or c<->f.")
+        await interaction.response.send_message("Unsupported conversion. Try km<->mi, kg<->lb, c<->f, or m2<->sqft.")
         return
 
     result = conversions[key](value)
     await interaction.response.send_message(f"{value} {from_unit} ≈ {result:.2f} {to_unit}")
+
 
 
 @tree.command(name="whois", description="Get info about a user")

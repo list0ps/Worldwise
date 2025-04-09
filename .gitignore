@@ -45,5 +45,7 @@ logo.png
 chat_logs.txt
 admin_command_help.txt
 
+downloaded_chats/
+
 # Environment variables
 .env

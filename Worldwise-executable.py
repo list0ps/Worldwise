@@ -311,7 +311,7 @@ async def on_interaction(interaction: discord.Interaction):
         options_str = ", ".join(options) if options else "No options"
 
         log_msg = (
-            f"Slash command used: `{command_name}` by {display_name} (ID: {user.id})\n"
+            f"**Slash command used**: `{command_name}` by {display_name} (ID: {user.id})\n"
             f"Options: {options_str}"
         )
 
@@ -403,12 +403,96 @@ async def on_message(message):
         deleted = await message.channel.purge(limit=count + 1, check=lambda m: m.id != message.id)
         await message.channel.send(f"Deleted {len(deleted)} messages.")
 
+
 #left in to swap later
 
     # Send and delete confirmation after a few seconds
         # confirm_msg = await message.channel.send(f"Deleted {len(deleted)} messages.")
         # await asyncio.sleep(5)
         # await confirm_msg.delete()
+
+
+    if message.content.lower().startswith("-a dl"):
+        if message.author.id != 223689629990125569:
+            await message.channel.send("You do not have permission to use this command.")
+            return
+
+        parts = message.content.strip().split(maxsplit=2)
+        if len(parts) < 3:
+            await message.channel.send("Usage: `-a dl #channel` or `-a dl channel_id`.")
+            return
+
+        # Resolve channel
+        channel_arg = parts[2]
+        target_channel = None
+
+        if message.channel_mentions:
+            target_channel = message.channel_mentions[0]
+        elif channel_arg.isdigit():
+            target_channel = client.get_channel(int(channel_arg))
+
+        if not target_channel:
+            await message.channel.send("Could not find the specified channel.")
+            return
+
+        # Send initial status message
+        status_msg = await message.channel.send(f"Fetching message history from {target_channel.mention}...")
+
+        messages = []
+        total_count = 0
+        update_interval = 1  # seconds
+        last_update = time.time()
+
+        try:
+            async for msg in target_channel.history(limit=None, oldest_first=True):
+                try:
+                    timestamp = msg.created_at.strftime("%Y-%m-%d %H:%M:%S")
+                    author_name = (
+                        msg.author.display_name
+                        if hasattr(msg.author, "display_name")
+                        else msg.author.name
+                    )
+                    content = msg.content.replace('\n', ' ')
+                    messages.append(f"[{timestamp}] {author_name}: {content}")
+                    total_count += 1
+
+                    # Edit status every 2 seconds
+                    if time.time() - last_update >= update_interval:
+                        await status_msg.edit(content=f"Messages collected: **{total_count:,}**... ⏳")
+                        last_update = time.time()
+
+                except Exception as e:
+                    print(f"Error processing message: {e}")
+                    continue
+
+        except discord.Forbidden:
+            await status_msg.edit(content="I don't have permission to read message history in that channel.")
+            return
+        except Exception as e:
+            await status_msg.edit(content=f"Error fetching messages: {e}")
+            return
+
+        if not messages:
+            await status_msg.edit(content="No messages found in that channel.")
+            return
+
+        # Save to file
+        from pathlib import Path
+        output_dir = Path("downloaded_chats")
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        filename = f"{target_channel.name}_history.txt"
+        filepath = output_dir / filename
+
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.write("\n".join(messages))
+
+        await status_msg.edit(
+            content=f"✅ Download complete. **{total_count:,}** messages fetched from {target_channel.mention}."
+        )
+        await message.channel.send(file=discord.File(str(filepath)))
+
+
 
     if message.content.lower() == "-a refresh": #solely for testing purposes
         if message.author.guild_permissions.administrator:

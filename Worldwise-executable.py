@@ -323,7 +323,7 @@ async def on_interaction(interaction: discord.Interaction):
 
 @client.event
 async def on_message(message):
-    if message.author == client.user:
+    if message.author == client.user or not isinstance(message.channel, discord.TextChannel):
         return
     
 
@@ -411,6 +411,55 @@ async def on_message(message):
         # await asyncio.sleep(5)
         # await confirm_msg.delete()
 
+# Prune keyword in #channel
+
+    if message.content.lower().startswith("-a prune"):
+            if message.author.id != 223689629990125569:  # Check if the user is the admin
+                await message.channel.send("You do not have permission to use this command.")
+                return
+
+            parts = message.content.strip().split(maxsplit=3)
+            if len(parts) < 4:
+                await message.channel.send("Usage: `-a prune #channel|channel_id <keyword>`.")
+                return
+
+            channel_arg = parts[2]
+            keyword = parts[3].lower()
+
+            # Resolve channel
+            target_channel = None
+            if message.channel_mentions:
+                target_channel = message.channel_mentions[0]
+            elif channel_arg.isdigit():
+                target_channel = client.get_channel(int(channel_arg))
+
+            if not target_channel:
+                await message.channel.send("Could not find the specified channel.")
+                return
+
+            # Send initial status message
+            status_msg = await message.channel.send(f"Deleting messages containing '{keyword}' in {target_channel.mention}...")
+
+            # Fetch and delete messages containing the keyword
+            total_deleted = 0
+            try:
+                async for msg in target_channel.history(limit=None):
+                    if keyword in msg.content.lower():
+                        await msg.delete()
+                        total_deleted += 1
+
+                        # Provide status updates
+                        if total_deleted % 1 == 0:  # Update for every 1 messages deleted
+                            await status_msg.edit(content=f"Deleted {total_deleted} messages so far... ⏳")
+
+            except discord.Forbidden:
+                await status_msg.edit(content="I don't have permission to delete messages in that channel.")
+                return
+            except Exception as e:
+                await status_msg.edit(content=f"Error during deletion: {e}")
+                return
+
+            await status_msg.edit(content=f"✅ Deletion complete. Total messages deleted: {total_deleted}.")
 
     if message.content.lower().startswith("-a dl"):
         if message.author.id != 223689629990125569:

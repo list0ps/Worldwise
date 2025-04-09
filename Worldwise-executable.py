@@ -364,7 +364,9 @@ async def on_message(message):
         deleted = await message.channel.purge(limit=count + 1, check=lambda m: m.id != message.id)
         await message.channel.send(f"Deleted {len(deleted)} messages.")
 
-        # Send and delete confirmation after a few seconds
+#left in to swap later
+
+    # Send and delete confirmation after a few seconds
         # confirm_msg = await message.channel.send(f"Deleted {len(deleted)} messages.")
         # await asyncio.sleep(5)
         # await confirm_msg.delete()
@@ -669,11 +671,11 @@ async def handle_timec_command(message):
                         await message.channel.send("Could not convert time between the mentioned users.")
                         return
 
-            # If no mentions, use the location-based conversion
+            # If no mentions, uses the location-based conversion
             converted_times = convert_time(time_str, origin_location, destination_location)
 
             if converted_times:
-                # Send the regular conversion response
+                # Sends the regular conversion response
                 await message.channel.send("\n".join(converted_times))
             else:
                 await message.channel.send(
@@ -688,7 +690,7 @@ async def handle_timec_command(message):
             "Invalid syntax. Use `timec <time> <origin location> to <destination location>` or `timec <time> @user1 to @user2`."
         )
 
-# actual conversion happens here (hopefully)
+# actual conversion happens here 
 async def handle_conversion(message, full_response):
     try:
         parts = message.content.split()

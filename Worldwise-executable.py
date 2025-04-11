@@ -1016,9 +1016,9 @@ async def send_error(error_message, original_message):
      #   await asyncio.sleep(500 * 60)  # Wait 28 minutes
 
 
-# @tree.command(name="active", description="Ping to keep the bot eligible")
-# async def active_command(interaction: discord.Interaction):
-#     await interaction.response.send_message("Good job, you've executed a useless command.")
+@tree.command(name="active", description="Ping to keep the bot eligible")
+async def active_command(interaction: discord.Interaction):
+    await interaction.response.send_message("Good job, you've executed a useless command.")
 
 #weather_command
 @tree.command(name="weather", description="Get the current weather for a user or location")

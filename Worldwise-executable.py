@@ -412,9 +412,9 @@ async def on_message(message):
         # await asyncio.sleep(5)
         # await confirm_msg.delete()
 
-# Prune keyword in #channel
 
 
+# module command
     if message.content.lower().strip() == "-a modules":
         if message.author.id != 223689629990125569:
             await message.channel.send("You do not have permission to use this command.")
@@ -485,7 +485,7 @@ async def on_message(message):
         await message.channel.send(embed=first_embed, view=view)
 
 
-
+# prune command
     if message.content.lower().startswith("-a prune"):
         if message.author.id != 223689629990125569:  # Check if the user is the admin
             await message.channel.send("You do not have permission to use this command.")

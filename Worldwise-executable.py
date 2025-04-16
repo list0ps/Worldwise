@@ -1449,7 +1449,6 @@ async def convertunit_command(interaction: discord.Interaction, value: float, fr
     await interaction.response.send_message(f"{value} {from_unit} ≈ {result:.2f} {to_unit}")
 
 
-
 @tree.command(name="whois", description="Get info about a user")
 @app_commands.describe(user="The user to look up")
 async def whois_command(interaction: discord.Interaction, user: discord.Member):

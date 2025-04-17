@@ -301,6 +301,7 @@ async def on_interaction(interaction: discord.Interaction):
         user = interaction.user
         display_name = user.display_name
         command_name = interaction.command.name if interaction.command else "Unknown"
+        guild_name = interaction.guild.name if interaction.guild else "DM"
 
         # Extract options if present
         options = []
@@ -312,7 +313,8 @@ async def on_interaction(interaction: discord.Interaction):
         options_str = ", ".join(options) if options else "No options"
 
         log_msg = (
-            f"**Slash command used**: `{command_name}` by {display_name} (ID: {user.id})\n"
+            f"**Slash command used** in **{guild_name}**:\n"
+            f"`/{command_name}` by {display_name} (ID: {user.id})\n"
             f"Options: {options_str}"
         )
 

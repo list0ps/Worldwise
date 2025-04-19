@@ -385,20 +385,6 @@ async def on_message(message):
             f"I've been online for **{hours}h {minutes}m {seconds}s**."
         )
 
-
-    if message.content.lower().strip() == "-a uptime": 
-        if message.author.id != 223689629990125569: #admin check
-            await message.channel.send("You do not have permission to use this command.")
-            return
-
-        uptime_seconds = int(time.time() - start_time)
-        hours, remainder = divmod(uptime_seconds, 3600)
-        minutes, seconds = divmod(remainder, 60)
-
-        await message.channel.send(
-            f"I've been online for **{hours}h {minutes}m {seconds}s**."
-        )
-        
     if message.content.lower().startswith("-a purge"):
         if message.author.id != 223689629990125569:
             await message.channel.send("You do not have permission to use this command.")

@@ -406,6 +406,26 @@ async def on_message(message):
         deleted = await message.channel.purge(limit=count + 1, check=lambda m: m.id != message.id)
         await message.channel.send(f"Deleted {len(deleted)} messages.")
 
+    if message.content.lower().startswith("-a purge"):
+        if message.author.id != 223689629990125569:
+            await message.channel.send("You do not have permission to use this command.")
+            return
+
+        parts = message.content.strip().split()
+
+        if len(parts) != 3 or not parts[2].isdigit():
+            await message.channel.send("Invalid syntax. Use `-a purge [number]`.")
+            return
+
+        count = int(parts[2])
+
+        if not message.channel.permissions_for(message.guild.me).manage_messages:
+            await message.channel.send("I don't have permission to delete messages in this channel.")
+            return
+
+        # Purge up to `count` messages before deletion command
+        deleted = await message.channel.purge(limit=count + 1, check=lambda m: m.id != message.id)
+        await message.channel.send(f"Deleted {len(deleted)} messages.")
 
 #left in to swap later
 

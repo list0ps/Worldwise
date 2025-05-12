@@ -485,6 +485,75 @@ async def on_message(message):
 
         await message.channel.send(embed=first_embed, view=view)
 
+# module command
+    if message.content.lower().strip() == "-a modules":
+        if message.author.id != 223689629990125569:
+            await message.channel.send("You do not have permission to use this command.")
+            return
+
+        import sys
+
+        # Gather modules and sizes
+        module_sizes = []
+        for name, mod in sys.modules.items():
+            try:
+                size = sys.getsizeof(mod)
+                module_sizes.append((name, size))
+            except Exception:
+                continue
+
+        module_sizes.sort(key=lambda x: x[0].lower())  # sort alphabetically
+        total_modules = len(module_sizes)
+
+        # Break into pages (20 per page)
+        modules_per_page = 20
+        pages = [
+            module_sizes[i:i + modules_per_page]
+            for i in range(0, total_modules, modules_per_page)
+        ]
+
+        class ModulePageView(discord.ui.View):
+            def __init__(self):
+                super().__init__()
+                self.page = 0
+
+            async def update_message(self, interaction):
+                embed = discord.Embed(
+                    title="📦 Loaded Python Modules",
+                    description=f"Total modules: **{total_modules}** | Page **{self.page + 1} / {len(pages)}**",
+                    color=discord.Color.teal()
+                )
+                page_content = "\n".join(
+                    f"{name}: {size:,} bytes" for name, size in pages[self.page]
+                )
+                embed.add_field(name="Module Name & Size", value=page_content, inline=False)
+                await interaction.response.edit_message(embed=embed, view=self)
+
+            @discord.ui.button(label="◀", style=discord.ButtonStyle.secondary)
+            async def prev_page(self, interaction: discord.Interaction, button: discord.ui.Button):
+                if self.page > 0:
+                    self.page -= 1
+                    await self.update_message(interaction)
+
+            @discord.ui.button(label="▶", style=discord.ButtonStyle.secondary)
+            async def next_page(self, interaction: discord.Interaction, button: discord.ui.Button):
+                if self.page < len(pages) - 1:
+                    self.page += 1
+                    await self.update_message(interaction)
+
+        # Initial embed
+        view = ModulePageView()
+        first_embed = discord.Embed(
+            title="Loaded Python Modules",
+            description=f"Total modules: **{total_modules}** | Page **1 / {len(pages)}**",
+            color=discord.Color.teal()
+        )
+        page_content = "\n".join(
+            f"{name}: {size:,} bytes" for name, size in pages[0]
+        )
+        first_embed.add_field(name="Module Name & Size", value=page_content, inline=False)
+
+        await message.channel.send(embed=first_embed, view=view)
 
 # prune command
     if message.content.lower().startswith("-a prune"):

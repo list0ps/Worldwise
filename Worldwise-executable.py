@@ -511,15 +511,6 @@ async def on_message(message):
             await message.channel.send("Could not find the specified channel.")
             return
 
-        target_channel = None
-        if message.channel_mentions:
-            target_channel = message.channel_mentions[0]
-        elif channel_arg.isdigit():
-            target_channel = client.get_channel(int(channel_arg))
-
-        if not target_channel:
-            await message.channel.send("Could not find the specified channel.")
-            return
 
         # Send initial status message
         status_msg = await message.channel.send(f"Deleting messages containing '{keyword}' in {target_channel.mention}...")
